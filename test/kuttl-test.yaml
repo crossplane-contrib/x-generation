@@ -1,0 +1,14 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestSuite
+commands:
+  - command: kubectl create namespace crossplane-system
+  - command: helm install crossplane https://charts.crossplane.io/stable/crossplane-1.9.0.tgz --namespace crossplane-system --wait --create-namespace
+  - command: kubectl apply -f tests/init/provider-aws.yaml
+  - command: kubectl wait "provider.pkg.crossplane.io/crossplane-provider-aws" --for=condition=healthy --timeout=300s
+  - command: kubectl apply -f tests/init/provider-config-aws.yaml
+startKIND: true
+kindConfig: kind-config.yaml
+testDirs:
+  - tests/compositions/
+reportFormat: xml
+timeout: 1200

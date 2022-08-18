@@ -1,0 +1,15 @@
+group: rds.aws.example.cloud
+name: DBInstance
+version: v1alpha1
+purpose: dbinstance
+crd: ./.work/provider-aws/package/crds/rds.aws.crossplane.io_dbinstances.yaml
+ignore: false
+connectionSecretKeys:
+  - username
+  - password
+  - endpoint
+  - port
+compositions:
+  - name: dbinstance
+    provider: example
+    default: true

@@ -1,0 +1,31 @@
+---
+apiVersion: s3.aws.crossplane.io/v1alpha3
+kind: BucketPolicy
+metadata:
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+spec:
+  forProvider:
+    region: eu-central-1
+    bucketNameRef:
+      name: example-bucket
+    policy:
+      version: '2012-10-17'
+      statements:
+        - action:
+            - s3:ListBucket
+          effect: Allow
+          principal:
+            awsPrincipals: 
+              - awsAccountId: "123456789101"
+          resource:
+            - "arn:aws:s3:::example-bucket-test"
+  providerConfigRef:
+    name: 123456789101-example

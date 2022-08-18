@@ -1,0 +1,29 @@
+---
+apiVersion: kms.aws.crossplane.io/v1alpha1
+kind: Alias
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: Alias
+    crossplane.io/external-name: example-alias
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    crossplane.io/claim-name: example-alias
+    crossplane.io/claim-namespace: assert-kms-alias
+    crossplane.io/composite: xxxxx
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+  name: example-alias
+spec:
+  deletionPolicy: Delete
+  forProvider:
+    region: eu-central-1
+    targetKeyIdSelector:
+      matchLabels:
+        external-name: example-key
+  providerConfigRef:
+    name: 123456789101-example

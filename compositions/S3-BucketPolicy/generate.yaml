@@ -1,0 +1,9 @@
+group: s3.aws.example.cloud
+name: BucketPolicy
+version: v1alpha3
+crd: ./.work/provider-aws/package/crds/s3.aws.crossplane.io_bucketpolicies.yaml
+ignore: false
+compositions:
+  - name: bucketpolicy
+    provider: example
+    default: true

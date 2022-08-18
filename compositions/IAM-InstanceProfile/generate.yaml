@@ -1,0 +1,9 @@
+group: iam.aws.example.cloud
+name: InstanceProfile
+version: v1alpha1
+crd: ./.work/provider-aws/package/crds/iam.aws.crossplane.io_instanceprofiles.yaml
+ignore: false
+compositions:
+  - name: instanceprofile
+    provider: example
+    default: true

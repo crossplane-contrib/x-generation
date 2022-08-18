@@ -1,0 +1,9 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+
+  - command: kubectl wait --for condition=established --timeout=20s xrd/compositeroles.iam.aws.example.cloud
+  - command: kubectl create ns assert-role
+  - command: kubectl apply -f ../../../../examples/iam/role.yaml
+  - command: sh -c ./resource/generate.sh
+  - command: kubectl kuttl assert  ./resource/zz-generated-assert.yaml

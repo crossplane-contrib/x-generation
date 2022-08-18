@@ -1,0 +1,9 @@
+group: iam.aws.example.cloud
+name: Role
+version: v1beta1
+crd: ./.work/provider-aws/package/crds/iam.aws.crossplane.io_roles.yaml
+ignore: false
+compositions:
+  - name: role
+    provider: example
+    default: true

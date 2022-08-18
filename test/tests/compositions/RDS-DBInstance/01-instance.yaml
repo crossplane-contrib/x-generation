@@ -1,0 +1,10 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+
+  - command: kubectl wait --for condition=established --timeout=20s xrd/compositedbinstances.rds.aws.example.cloud
+  - command: kubectl create ns assert-db
+  - command: kubectl apply -f "../../../../examples/rds/db-instance.yaml"
+  - command: kubectl apply -f "../../../../examples/rds/db-aurora-instance.yaml"
+  - command: sh -c ./resource/generate.sh
+  - command: kubectl kuttl assert ./resource/zz-generated-assert.yaml

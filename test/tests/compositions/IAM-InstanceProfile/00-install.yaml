@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: kubectl apply -f "../../../../compositions/IAM-InstanceProfile/composition-instanceprofile.yaml"
+  - command: kubectl apply -f "../../../../compositions/IAM-InstanceProfile/definition.yaml"

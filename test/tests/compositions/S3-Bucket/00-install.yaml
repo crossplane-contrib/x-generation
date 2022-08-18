@@ -1,0 +1,5 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+  - command: kubectl apply -f "../../../../compositions/S3-Bucket/composition-bucket.yaml"
+  - command: kubectl apply -f "../../../../compositions/S3-Bucket/definition.yaml"

@@ -1,0 +1,10 @@
+ma*.xpkg
+
+kubeconfig
+kind-logs*
+
+.work
+kuttl-test.xml
+zz-generated**
+
+.DS_Store

@@ -1,0 +1,51 @@
+---
+apiVersion: iam.aws.crossplane.io/v1beta1
+kind: Policy
+metadata:
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+spec:
+  deletionPolicy: Delete
+  forProvider:
+    description: "my example"
+    name: "my-example-policy"
+    document: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Actions": [
+              "s3:ListAllMyBuckets",
+            ]
+            Resources: ["arn:aws:s3:::*"]
+          },
+          {
+            "Actions": [
+              "s3:GetBucketLocation",
+              "s3:ListBucketVersions",
+              "s3:ListBucket",
+              "s3:GetBucketVersioning",
+            ]
+            "Resources": [
+                "arn:aws:s3:::example-install-dev"
+                "arn:aws:s3:::example-restore-dev"
+              ]
+          },
+          {
+            "Actions": ["s3:*Object*"]
+            "Resources": [
+                "arn:aws:s3:::example-install-dev/*"
+                "arn:aws:s3:::example-restore-dev/*"
+              ]
+          }
+        ]
+      }    
+  providerConfigRef:
+    name: 123456789101-example

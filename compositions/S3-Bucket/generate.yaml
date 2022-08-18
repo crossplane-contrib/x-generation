@@ -1,0 +1,9 @@
+group: s3.aws.example.cloud
+name: Bucket
+version: v1beta1
+crd: ./.work/provider-aws/package/crds/s3.aws.crossplane.io_buckets.yaml
+ignore: false
+compositions:
+  - name: bucket
+    provider: example
+    default: true

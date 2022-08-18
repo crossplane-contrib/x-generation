@@ -1,0 +1,9 @@
+group: iam.aws.example.cloud
+name: RolePolicyAttachment
+version: v1beta1
+crd: ./.work/provider-aws/package/crds/iam.aws.crossplane.io_rolepolicyattachments.yaml
+ignore: false
+compositions:
+  - name: rolepolicyattachment
+    provider: example
+    default: true

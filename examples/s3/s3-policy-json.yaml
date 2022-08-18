@@ -1,0 +1,34 @@
+---
+apiVersion: s3.aws.example.cloud/v1alpha3
+kind: BucketPolicy
+metadata:
+  name: example-bucket-policy-json
+  namespace: assert-bucket-policy
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+spec:
+  forProvider:
+    region: eu-central-1
+    bucketNameRef:
+      name: example-bucket
+    rawPolicy: |
+      {
+        "Statement": [
+          {
+            "Action":"s3:ListBucket",
+            "Effect":"Allow",
+            "Principal":"*",
+            "Resource":"arn:aws:s3:::example-bucket-test"
+          }
+        ],
+        "Version":"2012-10-17"
+      }
+  providerConfigRef:
+    name: 123456789101-example

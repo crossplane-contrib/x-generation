@@ -1,0 +1,52 @@
+---
+apiVersion: rds.aws.example.cloud/v1alpha1
+kind: DBInstance
+metadata:
+  name: example-dbinstance
+  namespace: assert-db
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+spec:
+  forProvider:
+    region: eu-central-1
+    allocatedStorage: 20
+    autoMinorVersionUpgrade: true
+    autogeneratePassword: true
+    backupRetentionPeriod: 14
+    dbInstanceClass: db.t3.micro
+    dbName: example
+    engine: postgres
+    engineVersion: "12.4"
+    masterUsername: adminuser
+    masterUserPasswordSecretRef:
+      key: password
+      name: example-dbinstance
+      namespace: assert-db
+    preferredBackupWindow: "7:00-8:00"
+    preferredMaintenanceWindow: "Sat:8:00-Sat:11:00"
+    publiclyAccessible: false
+    skipFinalSnapshot: true
+    storageEncrypted: false
+    storageType: gp2
+    dbParameterGroupName: example-dbparametergroup
+    applyImmediately: true
+  writeConnectionSecretToRef:
+    name: example-dbinstance-connection
+  providerConfigRef:
+    name: 123456789101-example
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-dbinstance
+  namespace: assert-db
+type: Opaque
+data:
+  password: dGVzdFBhc3N3b3JkITEyMw== # testPassword!123

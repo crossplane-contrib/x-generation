@@ -1,0 +1,9 @@
+apiVersion: kuttl.dev/v1beta1
+kind: TestStep
+commands:
+
+  - command: kubectl wait --for condition=established --timeout=20s xrd/compositepolicies.iam.aws.example.cloud
+  - command: kubectl create ns assert-iam-policy
+  - command: kubectl apply -f ../../../../examples/iam/policy.yaml
+  - command: sh -c ./resource/generate.sh
+  - command: kubectl kuttl assert  ./resource/zz-generated-assert.yaml

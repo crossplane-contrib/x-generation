@@ -1,0 +1,11 @@
+group: iam.aws.example.cloud
+name: Policy
+version: v1beta1
+crd: ./.work/provider-aws/package/crds/iam.aws.crossplane.io_policies.yaml
+ignore: false
+# external-name is full-arn
+patchExternalName: false
+compositions:
+  - name: policy
+    provider: example
+    default: true

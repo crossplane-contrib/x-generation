@@ -1,0 +1,25 @@
+---
+apiVersion: rds.aws.example.cloud/v1alpha1
+kind: DBInstance
+metadata:
+  name: example-aurora-mysql-instance
+  namespace: assert-db
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+spec:
+  forProvider:
+    region: eu-central-1
+    dbInstanceClass: db.t3.small
+    engine: aurora-mysql
+    dbClusterIdentifier: example-aurora-mysql-cluster
+  writeConnectionSecretToRef:
+    name: example-aurora-mysql-instance-connection
+  providerConfigRef:
+    name: 123456789101-example

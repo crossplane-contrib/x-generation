@@ -1,0 +1,25 @@
+
+---
+apiVersion: iam.aws.example.cloud/v1beta1
+kind: RolePolicyAttachment
+metadata:
+  name: example-role-policy-attachment
+  namespace: assert-role-policy-attachment
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+spec:
+  deletionPolicy: Delete
+  forProvider:
+    roleNameRef:
+      name: example-role-for-role-policy-attachment
+    policyArnRef:
+      name: example-policy-for-role-policy-attachment
+  providerConfigRef:
+    name: 123456789101-example
