@@ -192,7 +192,7 @@ local definitionStatus = k8s.GenerateSchema(
               'Optional'
           )+
           (if std.objectHas(s.config, "connectionSecretKeys") then           
-            k8s.GenPatch(
+            k8s.GenSecretPatch(
                 'FromCompositeFieldPath',
                 'metadata.uid',
                 'spec.writeConnectionSecretToRef.name',

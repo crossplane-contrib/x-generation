@@ -1,7 +1,7 @@
 # ====================================================================================
 # Setup Project
 
-PROVIDER_VERSION ?= v0.30.0
+PROVIDER_VERSION ?= v0.31.0
 
 # set the shell to bash always
 SHELL := /bin/bash
