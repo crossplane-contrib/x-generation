@@ -59,6 +59,27 @@
   GenPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy):: (
     [genPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy)]
   ),
+  local genSecretPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy) = (
+    {
+      [srcFieldName]: fieldFrom,
+      [dstFieldName]: fieldTo,
+      policy: {
+        fromFieldPath: policy,
+      },
+      type: type,
+      transforms: [
+        {
+          type: "string",
+          string: {
+            fmt: '%s-secret'
+          },
+        },
+      ],
+    }
+  ),
+  GenSecretPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy):: (
+    [genSecretPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy)]
+  ),
   GenOptionalPatchFrom(fields):: (
     [
       genPatch('FromCompositeFieldPath', field, field, 'fromFieldPath', 'toFieldPath', 'Optional')
