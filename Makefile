@@ -66,5 +66,5 @@ fetch:
 
 generate:
 	@$(INFO) Generating CRDs
-	@go run main.go .
+	@go run pkg/main.go .
 	@$(OK) Generating CRDs
