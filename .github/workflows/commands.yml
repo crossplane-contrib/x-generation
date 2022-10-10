@@ -26,7 +26,6 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const points = process.env.POINTS
-
           if (isNaN(parseInt(points))) {
             console.log("Malformed command - expected '/points <int>'")
             github.reactions.createForIssueComment({
@@ -38,7 +37,6 @@ jobs:
             return
           }
           const label = "points/" + points
-
           // Delete our needs-points-label label.
           try {
             await github.issues.deleteLabel({
@@ -52,7 +50,6 @@ jobs:
           catch(e) {
             console.log("Label 'needs-points-label' probably didn't exist.")
           }
-
           // Add our points label.
           github.issues.addLabels({
             issue_number: context.issue.number,
@@ -61,7 +58,6 @@ jobs:
             labels: [label]
           })
           console.log("Added '" + label + "' label.")
-
   # NOTE(negz): See also backport.yml, which is the variant that triggers on PR
   # merge rather than on comment.
   backport:

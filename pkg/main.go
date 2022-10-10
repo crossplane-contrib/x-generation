@@ -121,11 +121,10 @@ func (g *Generator) Exec(scriptPath, scriptFileOverride, outputPath string) {
 	if scriptFileOverride != "" {
 		fl = filepath.Join(scriptPath, scriptFileOverride)
 	} else {
+		fl = filepath.Join(scriptPath, "generate.jsonnet")
 		if g.ScriptFileName != nil {
 			fl = filepath.Join(scriptPath, *g.ScriptFileName)
 		}
-
-		fl = filepath.Join(scriptPath, "generate.jsonnet")
 	}
 
 	vm := jsonnet.MakeVM()

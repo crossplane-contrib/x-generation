@@ -8,3 +8,6 @@ kuttl-test.xml
 zz-generated**
 
 .DS_Store
+
+_output
+.cache
