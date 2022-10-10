@@ -8,3 +8,7 @@ kuttl-test.xml
 zz-generated**
 
 .DS_Store
+
+kuttle-test-local.yaml
+certs/
+.vscode/

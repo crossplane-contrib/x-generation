@@ -3,9 +3,14 @@ apiVersion: iam.aws.crossplane.io/v1beta1
 kind: Role
 metadata:
   labels:
+    commonLabelA: commonLabelAValue
+    commonLabelB: commonLabelBValue
     controlling.example.cloud/cost-reference: "123456789"
     controlling.example.cloud/owner: example
     controlling.example.cloud/product: example
+    crossplane.io/claim-name: example-role
+    crossplane.io/claim-namespace: assert-role
+    crossplane.io/composite: xxxxx
     tags.example.cloud/account: "123456789101"
     tags.example.cloud/zone: "dev"
     tags.example.cloud/environment: "dev"
@@ -14,6 +19,7 @@ metadata:
 spec:
   deletionPolicy: Delete
   forProvider:
+    # We dont check tags here, as there missorders happen du to tgas created by the system
     assumeRolePolicyDocument: | 
       {
         "Version": "2012-10-17",

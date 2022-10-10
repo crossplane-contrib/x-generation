@@ -1,9 +1,33 @@
 group: iam.aws.example.cloud
 name: InstanceProfile
 version: v1alpha1
-crd: ./.work/provider-aws/package/crds/iam.aws.crossplane.io_instanceprofiles.yaml
+provider:
+  name: provider-aws
+  version: v0.32.0
+  crd:
+    file: iam.aws.crossplane.io_instanceprofiles.yaml
+    version: v1alpha1
 ignore: false
 compositions:
   - name: instanceprofile
     provider: example
     default: true
+labels:
+  globalHandling:
+    fromCRD: append
+  fromCRD:
+    - locala.io/test
+    - localb.io/testb
+  common:
+    commonLocalLabelA: commonLocalLabelAValue
+    commonLocalLabelB: commonLoaclLabelBValue
+tags:
+  globalHandling:
+    common: append
+    fromLabels: replace
+  fromLabels:
+    - locala.io/test
+    - localb.io/testb
+  common:
+    commonLocalTagA: comonLocalTagAValue
+    commonLocalTagB: comonLocalTagBValue

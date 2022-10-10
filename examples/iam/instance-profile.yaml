@@ -13,6 +13,8 @@ metadata:
     tags.example.cloud/environment: "dev"
     tags.example.cloud/protection-requirement: "dev"
     tags.example.cloud/repourl: "x-generate"
+    locala.io/test: "test1"
+    localb.io/testb: "test2"
 spec:
   deletionPolicy: Delete
   forProvider:
