@@ -17,7 +17,8 @@ env:
   # Common users. We can't run a step 'if secrets.AWS_USR != ""' but we can run
   # a step 'if env.AWS_USR' != ""', so we copy these to succinctly test whether
   # credentials have been provided before trying to run steps that need them.
-  DOCKER_USR: ${{ secrets.DOCKER_USR }}
+  CONTRIB_DOCKER_USR: ${{ secrets.CONTRIB_DOCKER_USR }}
+  XPKG_ACCESS_ID: ${{ secrets.XPKG_ACCESS_ID }}
   AWS_USR: ${{ secrets.AWS_USR }}
 
 jobs:
@@ -46,9 +47,14 @@ jobs:
         with:
           submodules: true
 
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
       - name: Find the Go Build Cache
         id: go
-        run: echo "::set-output name=cache::$(go env GOCACHE)"
+        run: echo "::set-output name=cache::$(make go.cachedir)"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@v2
@@ -67,22 +73,12 @@ jobs:
       - name: Vendor Dependencies
         run: make vendor vendor.check
 
-      # Go version coming with golangci-lint-action may not be our desired
-      # go version. We deploy our desired go version and then skip go
-      # installation in golangci-lint-action in the next step as suggested
-      # in https://github.com/golangci/golangci-lint-action/issues/183
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      # We could run 'make lint' to ensure our desired Go version, but we
-      # prefer this action because it leaves 'annotations' (i.e. it comments
-      # on PRs to point out linter violations).
+      # We could run 'make lint' but we prefer this action because it leaves
+      # 'annotations' (i.e. it comments on PRs to point out linter violations).
       - name: Lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           version: ${{ env.GOLANGCI_VERSION }}
-          skip-go-installation: true
 
   check-diff:
     runs-on: ubuntu-20.04
@@ -102,7 +98,7 @@ jobs:
 
       - name: Find the Go Build Cache
         id: go
-        run: echo "::set-output name=cache::$(go env GOCACHE)"
+        run: echo "::set-output name=cache::$(make go.cachedir)"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@v2
@@ -145,7 +141,7 @@ jobs:
 
       - name: Find the Go Build Cache
         id: go
-        run: echo "::set-output name=cache::$(go env GOCACHE)"
+        run: echo "::set-output name=cache::$(make go.cachedir)"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@v2
@@ -205,7 +201,7 @@ jobs:
 
       - name: Find the Go Build Cache
         id: go
-        run: echo "::set-output name=cache::$(go env GOCACHE)"
+        run: echo "::set-output name=cache::$(make go.cachedir)"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@v2
@@ -221,7 +217,6 @@ jobs:
           key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-pkg-
-
       - name: Vendor Dependencies
         run: make vendor vendor.check
 
@@ -267,7 +262,7 @@ jobs:
 
       - name: Find the Go Build Cache
         id: go
-        run: echo "::set-output name=cache::$(go env GOCACHE)"
+        run: echo "::set-output name=cache::$(make go.cachedir)"
 
       - name: Cache the Go Build Cache
         uses: actions/cache@v2
@@ -292,33 +287,42 @@ jobs:
           # We're using docker buildx, which doesn't actually load the images it
           # builds by default. Specifying --load does so.
           BUILD_ARGS: "--load"
-
+      
       - name: Publish Artifacts to GitHub
         uses: actions/upload-artifact@v2
         with:
           name: output
           path: _output/**
-
+      
       - name: Login to Docker
         uses: docker/login-action@v1
-        if: env.DOCKER_USR != ''
+        if: env.CONTRIB_DOCKER_USR != ''
         with:
-          username: ${{ secrets.DOCKER_USR }}
-          password: ${{ secrets.DOCKER_PSW }}
-
+          username: ${{ secrets.CONTRIB_DOCKER_USR }}
+          password: ${{ secrets.CONTRIB_DOCKER_PSW }}
+      
+      - name: Login to Upbound
+        uses: docker/login-action@v1
+        if: env.XPKG_ACCESS_ID != ''
+        with:
+          registry: xpkg.upbound.io
+          username: ${{ secrets.XPKG_ACCESS_ID }}
+          password: ${{ secrets.XPKG_TOKEN }}
+ 
       - name: Publish Artifacts to S3 and Docker Hub
         run: make -j2 publish BRANCH_NAME=${GITHUB_REF##*/}
-        if: env.AWS_USR != '' && env.DOCKER_USR != ''
+        if: env.AWS_USR != '' && env.CONTRIB_DOCKER_USR != ''
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_USR }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_PSW }}
           GIT_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Promote Artifacts in S3 and Docker Hub
-        if: github.ref == 'refs/heads/master' && env.AWS_USR != '' && env.DOCKER_USR != ''
+        if: github.ref == 'refs/heads/master' && env.AWS_USR != '' && env.CONTRIB_DOCKER_USR != ''
         run: make -j2 promote
         env:
           BRANCH_NAME: master
           CHANNEL: master
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_USR }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_PSW }}
+        
