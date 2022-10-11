@@ -8,18 +8,19 @@ The generation of crds can be configured in two places, either in the global con
 ### global configuration
 In the local configuration, the provider used and labels and tags that should be used for all generated crds can be configured in a global configuration. The default name for this file is `generator-config.yaml`, the filename can be overwritten using the `--configFile` flag. 
 
-| Property         | Type              | Description |
-|------------------|-------------------|-------------|
-| provider         | object            | Object used to configure the provider used for the generation |
-| provider.baseURL | string            | The url globaly used to retrieve the crds needed for generating the compositions, three placeholders are provided during the generation of compositions: The name of the provider, the version of the provider and the crd file name|
-| provider.name    | string            | The name of the provider |
-| provider.version | string            | The version of the provider |
-| labels           | object            | Configure the labels and label patches for each crd |
-| labels.fromCRD   | array of strings  | For each entry `e` a patch that copies the value of the `metadata.labels[e]` field from the CompositeResourceDefinition to the same field of the resource |
-| labels.common    | object of strings | For each property of the object a label with the given value is created in the resource |
-| tags             | object            | Configure the tags and tag patches for each crd |
-| tags.fromLabels  | array of strings  | For each entry `e` a patch that copies the value of the `metadata.labels[e]` field to a tag with the same name and value is created
-| tags.common      | object of strings | For each property of the object a tag with the given value is created in the resource |
+| Property              | Type              | Description |
+|-----------------------|-------------------|-------------|
+| compositionIdentifier | string            | Defines the refix used for the provider label of the composition |
+| provider              | object            | Object used to configure the provider used for the generation |
+| provider.baseURL      | string            | The url globaly used to retrieve the crds needed for generating the compositions, three placeholders are provided during the generation of compositions: The name of the provider, the version of the provider and the crd file name|
+| provider.name         | string            | The name of the provider |
+| provider.version      | string            | The version of the provider |
+| labels                | object            | Configure the labels and label patches for each crd |
+| labels.fromCRD        | array of strings  | For each entry `e` a patch that copies the value of the `metadata.labels[e]` field from the CompositeResourceDefinition to the same field of the resource |
+| labels.common         | object of strings | For each property of the object a label with the given value is created in the resource |
+| tags                  | object            | Configure the tags and tag patches for each crd |
+| tags.fromLabels       | array of strings  | For each entry `e` a patch that copies the value of the `metadata.labels[e]` field to a tag with the same name and value is created
+| tags.common           | object of strings | For each property of the object a tag with the given value is created in the resource |
 
 
 The values in `tags.fromLabels` must exist in `lables.fromCRD` otherwise no values that can be patched to the resources exist.

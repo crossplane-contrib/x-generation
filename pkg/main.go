@@ -45,9 +45,10 @@ type Composition struct {
 }
 
 type GeneratorConfig struct {
-	Provider GlobalProviderConfig `yaml:"provider" json:"provider"`
-	Tags     TagConfig            `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Labels   LabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
+	CompositionIdentifier string               `yaml:"compositionIdentifier" json:"compositionIdentifier"`
+	Provider              GlobalProviderConfig `yaml:"provider" json:"provider"`
+	Tags                  TagConfig            `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Labels                LabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
 }
 
 type TagConfig struct {
@@ -366,6 +367,7 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 
 	vm.ExtVar("tagType", g.tagType)
 	vm.ExtVar("tagProperty", g.tagProperty)
+	vm.ExtVar("compositionIdentifier", generatorConfig.CompositionIdentifier)
 
 	r, err := vm.EvaluateFile(fl)
 	if err != nil {
