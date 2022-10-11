@@ -36,6 +36,25 @@ spec:
     storageType: gp2
     dbParameterGroupName: example-dbparametergroup
     applyImmediately: true
+    tags:
+      - key: tags.example.cloud/account
+        value: "123456789101"
+      - key: tags.example.cloud/environment
+        value: dev
+      - key: tags.example.cloud/protection-requirement
+        value: dev
+      - key: tags.example.cloud/repourl
+        value: x-generate
+      - key: tags.example.cloud/zone
+        value: dev
+      - key: commonLocalTagA
+        value: comonLocalTagAValue
+      - key: commonLocalTagB
+        value: comonLocalTagBValue
+      - key: commonTagA
+        value: comonTagAValue
+      - key: commonTagB
+        value: comonTagBValue
   providerConfigRef:
     name: 123456789101-example
 ---

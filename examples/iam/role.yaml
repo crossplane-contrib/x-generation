@@ -1,5 +1,5 @@
 ---
-apiVersion: iam.aws.example.cloud/v1beta1
+apiVersion: iam.aws.example.cloud/v1alpha1
 kind: Role
 metadata:
   name: example-role

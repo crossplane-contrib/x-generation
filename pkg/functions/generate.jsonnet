@@ -4,12 +4,19 @@ local s = {
   config: std.parseJson(std.extVar('config')),
   crd: std.parseJson(std.extVar('crd')),
   data: std.parseJson(std.extVar('data')),
+  tagList: std.parseJson(std.extVar('tagList')),
+  tagType: std.extVar('tagType'),
+  tagProperty: std.extVar('tagProperty'),
+  commonTags: std.parseJson(std.extVar('commonTags')),
+  labelList: std.parseJson(std.extVar('labelList')),
+  commonLabels: std.parseJson(std.extVar('commonLabels')),
+  globalLabels: std.parseJson(std.extVar('globalLabels')),
 };
 
 local plural = k8s.NameToPlural(s.config);
 local fqdn = k8s.FQDN(plural, s.config.group);
 local resourceFqdn = k8s.FQDN(s.crd.names.kind, s.crd.group);
-local version = k8s.GetVersion(s.crd, s.config.version);
+local version = k8s.GetVersion(s.crd, s.config.provider.crd.version);
 
 local uidFieldPath = k8s.GetUIDFieldPath(s.config);
 local uidFieldName = 'uid';
@@ -48,7 +55,7 @@ local definitionStatus = k8s.GenerateSchema(
       },
       versions: [
         {
-          name: version.name,
+          name: s.config.version,
           referenceable: version.storage,
           served: version.served,
           schema: {
@@ -108,33 +115,7 @@ local definitionStatus = k8s.GenerateSchema(
         },
         {
           name: 'Common',
-          patches: k8s.GenOptionalPatchFrom(
-            // Patch crossplane well-known metadata fields
-            k8s.GenGlobalLabel([
-              'claim-name',
-              'claim-namespace',
-              'composite',
-            ])
-            +
-            // Patch company-specific fields
-            k8s.GenCompanyControllingLabel([
-              'cost-reference',
-              'owner',
-              'product',
-            ])
-            +
-            k8s.GenCompanyGenericLabel([
-              'account',
-              'zone',
-              'environment',
-              'protection-requirement',
-              'repourl',
-            ])
-            +
-            k8s.GenExternalGenericLabel([
-              'external-name'
-            ])
-          ),
+          patches: k8s.GenLabelsPatch(s.globalLabels)
         },
         {
           name: 'Parameters',
@@ -146,14 +127,19 @@ local definitionStatus = k8s.GenerateSchema(
             )
           ),
         },
-      ],
+        {
+          name: 'Labels',
+          patches: k8s.GenLabelsPatch(s.labelList)
+        }
+      ] + k8s.GenTagsPatch(s.tagType, s.tagList, s.tagProperty),
       resources: [
         {
           local resource = self,
           name: s.crd.spec.names.kind,
           base: {
-            apiVersion: s.crd.spec.group + '/' + s.config.version,
+            apiVersion: s.crd.spec.group + '/' + s.config.provider.crd.version,
             kind: resource.name,
+            metadata: k8s.GenCommonLabels(s.commonLabels),
             spec: {
               providerConfigRef: {
                 name: 'default',
@@ -162,6 +148,7 @@ local definitionStatus = k8s.GenerateSchema(
                 {
                   namespace: 'crossplane-system'
                 },
+              forProvider: k8s.GenTagKeys(s.tagType, s.tagProperty, s.tagList, s.commonTags)
             },
           } + k8s.SetDefaults(s.config),
           patches: [

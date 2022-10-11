@@ -1,7 +1,10 @@
 group: iam.aws.example.cloud
 name: Policy
-version: v1beta1
-crd: ./.work/provider-aws/package/crds/iam.aws.crossplane.io_policies.yaml
+version: v1alpha1
+provider:
+  crd:
+    file: iam.aws.crossplane.io_policies.yaml
+    version: v1beta1
 ignore: false
 # external-name is full-arn
 patchExternalName: false

@@ -1,5 +1,5 @@
 ---
-apiVersion: s3.aws.example.cloud/v1alpha3
+apiVersion: s3.aws.example.cloud/v1alpha1
 kind: BucketPolicy
 metadata:
   name: example-bucket-policy

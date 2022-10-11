@@ -22,6 +22,25 @@ spec:
   deletionPolicy: Delete
   forProvider:
     enableKeyRotation: true
+    tags:
+      - tagKey: tags.example.cloud/account
+        tagValue: "123456789101"
+      - tagKey: tags.example.cloud/environment
+        tagValue: dev
+      - tagKey: tags.example.cloud/protection-requirement
+        tagValue: dev
+      - tagKey: tags.example.cloud/repourl
+        tagValue: x-generate
+      - tagKey: tags.example.cloud/zone
+        tagValue: dev
+      - tagKey: commonLocalTagA
+        tagValue: comonLocalTagAValue
+      - tagKey: commonLocalTagB
+        tagValue: comonLocalTagBValue
+      - tagKey: commonTagA
+        tagValue: comonTagAValue
+      - tagKey: commonTagB
+        tagValue: comonTagBValue
     policy: |-
       {
         "Version": "2012-10-17",

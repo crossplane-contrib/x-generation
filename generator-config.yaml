@@ -1,0 +1,27 @@
+provider:
+  baseURL: https://raw.githubusercontent.com/crossplane-contrib/%s/%s/package/crds/%s
+  name: provider-aws
+  version: v0.32.0
+labels:
+  fromCRD:
+    - controlling.example.cloud/cost-reference
+    - controlling.example.cloud/owner
+    - controlling.example.cloud/product
+    - tags.example.cloud/account
+    - tags.example.cloud/environment
+    - tags.example.cloud/protection-requirement
+    - tags.example.cloud/repourl
+    - tags.example.cloud/zone
+  common:
+    commonLabelA: commonLabelAValue
+    commonLabelB: commonLabelBValue
+tags:
+  fromLabels:
+    - tags.example.cloud/account
+    - tags.example.cloud/environment
+    - tags.example.cloud/protection-requirement
+    - tags.example.cloud/repourl
+    - tags.example.cloud/zone
+  common:
+    commonTagA: comonTagAValue
+    commonTagB: comonTagBValue

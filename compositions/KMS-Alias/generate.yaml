@@ -1,7 +1,12 @@
 group: kms.aws.example.cloud
 name: Alias
 version: v1alpha1
-crd: ./.work/provider-aws/package/crds/kms.aws.crossplane.io_aliases.yaml
+provider:
+  name: provider-aws
+  version: v0.32.0
+  crd:
+    file: kms.aws.crossplane.io_aliases.yaml
+    version: v1alpha1
 ignore: false
 patchExternalName: false
 compositions:

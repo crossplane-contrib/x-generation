@@ -3,7 +3,10 @@
 
   local defaultIgnores = [
     'status.conditions',
-    'spec.writeConnectionSecretToRef'
+    'spec.writeConnectionSecretToRef',
+    'spec.forProvider.tags',
+    'spec.forProvider.tagSpecifications',
+    'spec.forProvider.tagging'
   ],
 
   NameToPlural(config):: (
@@ -31,20 +34,8 @@
   local labelize(fqdn) = (
     "metadata.labels['%s']" % [fqdn]
   ),
-  Labelize(fqdn):: (
-    labelize(fqdn)
-  ),
-  GenCompanyControllingLabel(fields):: (
-    [labelize('controlling.example.cloud/' + field) for field in fields]
-  ),
-  GenCompanyGenericLabel(fields):: (
-    [labelize('tags.example.cloud/' + field) for field in fields]
-  ),
-  GenExternalGenericLabel(fields):: (
+  local genExternalGenericLabel(fields) = (
     [labelize(field) for field in fields]
-  ),
-  GenGlobalLabel(fields):: (
-    [labelize('crossplane.io/' + field) for field in fields]
   ),
   local genPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy) = (
     {
@@ -80,11 +71,14 @@
   GenSecretPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy):: (
     [genSecretPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy)]
   ),
-  GenOptionalPatchFrom(fields):: (
+  local genOptionalPatchFrom(fields) = (
     [
       genPatch('FromCompositeFieldPath', field, field, 'fromFieldPath', 'toFieldPath', 'Optional')
       for field in fields
     ]
+  ),
+  GenOptionalPatchFrom(fields):: (
+    genOptionalPatchFrom(fields)
   ),
   GenOptionalPatchTo(fields):: (
     [
@@ -209,5 +203,62 @@
       config.uidFieldPath
     else
       defaultUIDFieldPath
+  ),
+  GenTagKeys(tagType, tagProperty, tags, commonTags):: (
+    local tagProp = if tagProperty == "tag" then "tags" else if tagProperty == "tagSet" then "tagSet";
+    local generatedTags = {
+      [if tagType == "keyValueArray" then tagProp]: [{
+        key: tag
+      } for tag in tags ]
+      +
+      [{
+        key: tag,
+        value: commonTags[tag],
+      } for tag in std.objectFields(commonTags) ],
+      [if tagType == "tagKeyValueArray" then tagProp]: [{
+        tagKey: tag
+      } for tag in tags ]
+      +
+      [{
+        tagKey: tag,
+        tagValue: commonTags[tag],
+      } for tag in std.objectFields(commonTags) ],
+      [if tagType == "stringObject" && std.length(commonTags) > 0 then "tags"]: [{
+        [tag]: commonTags[tag],
+      } for tag in std.objectFields(commonTags) ]
+    };
+    if tagProperty == "tag" then generatedTags
+    else if tagProperty == "tagSet" then {
+      tagging: generatedTags
+    }
+    else {}
+  ),
+  GenTagsPatch(tagType, tags, tagProperty):: (
+  local tagProp = if tagProperty == "tag" then "tags" else if tagProperty == "tagSet" then "tagging.tagSet";
+  if  tagType != "" then [
+    {
+      name: "Tags",
+      patches: if  tagType == "keyValueArray" then [
+        genPatch('FromCompositeFieldPath', "metadata.labels["+tags[f]+"]", "spec.forProvider."+tagProp+"["+f+"].value", 'fromFieldPath', 'toFieldPath', "Required")
+        for f in std.range(0, std.length(tags)-1)
+      ] else if  tagType == "tagKeyValueArray" then [
+        genPatch('FromCompositeFieldPath', "metadata.labels["+tags[f]+"]", "spec.forProvider."+tagProp+"["+f+"].tagValue", 'fromFieldPath', 'toFieldPath', "Required")
+        for f in std.range(0, std.length(tags)-1)
+      ] else if  tagType == "stringObject" then [
+        genPatch('FromCompositeFieldPath', "metadata.labels["+tag+"]", "spec.forProvider."+tagProp+"["+tag+"]", 'fromFieldPath', 'toFieldPath', 'Optional')
+        for tag in tags
+      ]
+    }
+   ] else []
+  ),
+  GenLabelsPatch(labelList):: (
+    genOptionalPatchFrom(genExternalGenericLabel(labelList))
+  ),
+  GenCommonLabels(commonLabels):: (
+    {
+    [if std.length(commonLabels) > 0 then "labels"]: {
+        [label]: commonLabels[label] for label in std.objectFields(commonLabels)
+      }
+    }
   ),
 }

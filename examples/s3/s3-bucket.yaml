@@ -1,5 +1,5 @@
 ---
-apiVersion: s3.aws.example.cloud/v1beta1
+apiVersion: s3.aws.example.cloud/v1alpha1
 kind: Bucket
 metadata:
   name: example-bucket
