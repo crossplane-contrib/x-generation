@@ -274,7 +274,7 @@ func getTagListAsString(g *Generator) string {
 	return getJsonStringFromList(&g.Tags.FromLabels)
 }
 
-func getCommonTagsAsString(generatorConfig *GeneratorConfig, g *Generator) string {
+func getCommonTagsAsString(g *Generator) string {
 	if len(g.Tags.Common) > 0 {
 		return getJsonStringFromMap(&g.Tags.Common)
 	}
@@ -285,7 +285,7 @@ func getLabelListAsString(g *Generator) string {
 	return getJsonStringFromList(&g.Labels.FromCRD)
 }
 
-func getCommonLabelsString(generatorConfig *GeneratorConfig, g *Generator) string {
+func getCommonLabelsString(g *Generator) string {
 	if len(g.Labels.Common) > 0 {
 		return getJsonStringFromMap(&g.Labels.Common)
 	}
@@ -356,9 +356,9 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 
 	vm.ExtVar("tagList", getTagListAsString(g))
 
-	vm.ExtVar("commonTags", getCommonTagsAsString(generatorConfig, g))
+	vm.ExtVar("commonTags", getCommonTagsAsString(g))
 	vm.ExtVar("labelList", getLabelListAsString(g))
-	vm.ExtVar("commonLabels", getCommonLabelsString(generatorConfig, g))
+	vm.ExtVar("commonLabels", getCommonLabelsString(g))
 
 	vm.ExtVar("tagType", g.tagType)
 	vm.ExtVar("tagProperty", g.tagProperty)
@@ -437,22 +437,22 @@ func (g *Generator) UpdateConfig(generatorConfig *GeneratorConfig) {
 	if generatorConfig != nil {
 		if g.Labels.GlobalHandling.FromCRD == appendGlobal {
 			g.Labels.FromCRD = *appendLists(&generatorConfig.Labels.FromCRD, &g.Labels.FromCRD)
-		} else if len(g.Labels.FromCRD) == 0 && g.Labels.GlobalHandling.FromCRD != appendGlobal {
+		} else if len(g.Labels.FromCRD) == 0 && g.Labels.GlobalHandling.FromCRD != replaceGlobal {
 			g.Labels.FromCRD = generatorConfig.Labels.FromCRD
 		}
 		if g.Labels.GlobalHandling.Common == appendGlobal {
 			g.Labels.Common = appendStringMaps(generatorConfig.Labels.Common, g.Labels.Common)
-		} else if len(g.Labels.Common) == 0 && g.Labels.GlobalHandling.Common != appendGlobal {
+		} else if len(g.Labels.Common) == 0 && g.Labels.GlobalHandling.Common != replaceGlobal {
 			g.Labels.Common = generatorConfig.Labels.Common
 		}
 		if g.Tags.GlobalHandling.FromLabels == appendGlobal {
 			g.Tags.FromLabels = *appendLists(&generatorConfig.Tags.FromLabels, &g.Tags.FromLabels)
-		} else if len(g.Tags.FromLabels) == 0 && g.Tags.GlobalHandling.FromLabels != appendGlobal {
+		} else if len(g.Tags.FromLabels) == 0 && g.Tags.GlobalHandling.FromLabels != replaceGlobal {
 			g.Tags.FromLabels = generatorConfig.Tags.FromLabels
 		}
 		if g.Tags.GlobalHandling.Common == appendGlobal {
 			g.Tags.Common = appendStringMaps(generatorConfig.Tags.Common, g.Tags.Common)
-		} else if len(g.Tags.Common) == 0 && g.Tags.GlobalHandling.Common != appendGlobal {
+		} else if len(g.Tags.Common) == 0 && g.Tags.GlobalHandling.Common != replaceGlobal {
 			g.Tags.Common = generatorConfig.Tags.Common
 		}
 
@@ -512,17 +512,19 @@ func listHas(list *[]string, value string) bool {
 // The tags we patch from labels must exist in the global configuration,
 // or in the list of global labels
 func checkConfig(generatorConfig *GeneratorConfig) error {
-	listOfErrFields := []string{}
+	if generatorConfig != nil {
+		listOfErrFields := []string{}
 
-	commonLables := generatorConfig.Labels.Common
-	for _, t := range generatorConfig.Tags.FromLabels {
-		if _, ok := commonLables[t]; !ok && !listHas(&generatorConfig.Labels.FromCRD, t) && !listHas(&globalLabels, t) {
-			listOfErrFields = append(listOfErrFields, t)
+		commonLables := generatorConfig.Labels.Common
+		for _, t := range generatorConfig.Tags.FromLabels {
+			if _, ok := commonLables[t]; !ok && !listHas(&generatorConfig.Labels.FromCRD, t) && !listHas(&globalLabels, t) {
+				listOfErrFields = append(listOfErrFields, t)
 
+			}
 		}
-	}
-	if len(listOfErrFields) > 0 {
-		return errors.New("Not all tags.fromLables entries exist in labels.fromCRD or labels.Common or in globalLabels: " + getJsonStringFromList(&listOfErrFields))
+		if len(listOfErrFields) > 0 {
+			return errors.New("Not all tags.fromLables entries exist in labels.fromCRD or labels.Common or in globalLabels: " + getJsonStringFromList(&listOfErrFields))
+		}
 	}
 	return nil
 }
