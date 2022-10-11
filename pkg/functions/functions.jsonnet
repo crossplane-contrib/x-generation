@@ -5,6 +5,7 @@
     'status.conditions',
     'spec.writeConnectionSecretToRef',
     'spec.forProvider.tags',
+    'spec.forProvider.tagSpecifications',
     'spec.forProvider.tagging'
   ],
 
