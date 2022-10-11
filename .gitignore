@@ -9,6 +9,10 @@ zz-generated**
 
 .DS_Store
 
+
 kuttle-test-local.yaml
 certs/
 .vscode/
+
+_output
+.cache

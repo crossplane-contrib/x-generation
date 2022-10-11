@@ -196,9 +196,14 @@ func (g *Generator) LoadCRD(generatorConfig *GeneratorConfig) error {
 	}
 
 	r, err := yaml.YAMLToJSON(crd)
-
+	if err != nil {
+		return errors.Errorf("Convert YAML to JSON: %v\n", err)
+	}
 	var crd2 extv1.CustomResourceDefinition
-	json.Unmarshal(r, &crd2)
+	err = json.Unmarshal(r, &crd2)
+	if err != nil {
+		return errors.Errorf("Unmarshal crd content: %v\n", err)
+	}
 	version := g.Provider.CRD.Version
 	if version == "" {
 		version = g.Version
@@ -338,7 +343,6 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 		fl = filepath.Join(scriptPath, scriptFileOverride)
 	} else {
 		fl = filepath.Join(scriptPath, "generate.jsonnet")
-
 		if g.ScriptFileName != nil {
 			fl = filepath.Join(scriptPath, *g.ScriptFileName)
 		}
