@@ -26,9 +26,9 @@
   GenerateCategories(group):: (
     ['crossplane', 'composition', std.split(group, '.')[0]]
   ),
-  GenerateLabels(provider):: (
+  GenerateLabels(compositionIdentifier, provider):: (
     {
-      'example.cloud/provider': provider,
+      [compositionIdentifier+'/provider']: provider,
     }
   ),
   local labelize(fqdn) = (

@@ -11,6 +11,7 @@ local s = {
   labelList: std.parseJson(std.extVar('labelList')),
   commonLabels: std.parseJson(std.extVar('commonLabels')),
   globalLabels: std.parseJson(std.extVar('globalLabels')),
+  compositionIdentifier: std.extVar('compositionIdentifier'),
 };
 
 local plural = k8s.NameToPlural(s.config);
@@ -94,7 +95,7 @@ local definitionStatus = k8s.GenerateSchema(
     kind: 'Composition',
     metadata: {
       name: "composite" + composition.name + "." + s.config.group,
-      labels: k8s.GenerateLabels(composition.provider),
+      labels: k8s.GenerateLabels(s.compositionIdentifier,composition.provider),
     },
     spec: {
       local spec = self,
