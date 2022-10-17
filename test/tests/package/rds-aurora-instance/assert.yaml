@@ -1,9 +1,7 @@
 ---
-apiVersion: iam.aws.example.cloud/v1alpha1
-kind: InstanceProfile
+apiVersion: rds.aws.crossplane.io/v1alpha1
+kind: DBInstance
 metadata:
-  name: example-instance-profile
-  namespace: assert-instance-profile
   labels:
     controlling.example.cloud/cost-reference: "123456789"
     controlling.example.cloud/owner: example
@@ -13,15 +11,12 @@ metadata:
     tags.example.cloud/environment: "dev"
     tags.example.cloud/protection-requirement: "dev"
     tags.example.cloud/repourl: "x-generate"
-    locala.io/test: "test1"
-    localb.io/testb: "test2"
-  annotations:
-    uptest.upbound.io/conditions: "Ready=False"
-    uptest.upbound.io/post-assert-hook: "../../test/tests/package/iam-instanceprofile/post-assert.sh ${KUBECTL} ${KUTTL}"
+  name: AURORA
 spec:
-  deletionPolicy: Delete
   forProvider:
-    roleRef:
-      name: example-role-for-instance-profile
+    region: eu-central-1
+    dbInstanceClass: db.t3.small
+    engine: aurora-mysql
+    dbClusterIdentifier: example-aurora-mysql-cluster
   providerConfigRef:
     name: 123456789101-example

@@ -15,6 +15,8 @@ metadata:
     tags.example.cloud/repourl: "x-generate"
   annotations:
     crossplane.io/external-name: example-bucket-test
+    uptest.upbound.io/conditions: "Ready=False"
+    uptest.upbound.io/post-assert-hook: "../../test/tests/package/s3-bucket/post-assert.sh ${KUBECTL} ${KUTTL}"
 spec:
   forProvider:
     acl: private

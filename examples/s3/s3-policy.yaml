@@ -13,6 +13,9 @@ metadata:
     tags.example.cloud/environment: "dev"
     tags.example.cloud/protection-requirement: "dev"
     tags.example.cloud/repourl: "x-generate"
+  annotations:
+    uptest.upbound.io/conditions: "Ready=False"
+    uptest.upbound.io/post-assert-hook: "../../test/tests/package/s3-bucket-policy/post-assert.sh ${KUBECTL} ${KUTTL}"
 spec:
   forProvider:
     region: eu-central-1
