@@ -1,5 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - command: kubectl apply -f "../../../../compositions/KMS-Key/composition-key.yaml"
-  - command: kubectl apply -f "../../../../compositions/KMS-Key/definition.yaml"

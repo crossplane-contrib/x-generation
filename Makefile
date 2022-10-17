@@ -3,22 +3,37 @@
 
 PROJECT_NAME := x-generation
 PROJECT_REPO := github.com/crossplane-contrib/$(PROJECT_NAME)
-PROVIDER_AWS_VERSION ?= v0.31.0
 
-PLATFORMS ?= linux_amd64 linux_arm64
-# -include will silently skip missing files, which allows us
-# to load those files with a target in the Makefile. If only
-# "include" was used, the make command would fail and refuse
-# to run a target until the include commands succeeded.
+# NOTE(hasheddan): the platform is insignificant here as Configuration package
+# images are not architecture-specific. We constrain to one platform to avoid
+# needlessly pushing a multi-arch image.
+PLATFORMS ?= linux_amd64
 -include build/makelib/common.mk
 
 # ====================================================================================
-# Setup Images
+# Setup Kubernetes tools
 
-# even though this repo doesn't build images (note the no-op img.build target below),
-# some of the init is needed for the cross build container, e.g. setting BUILD_REGISTRY
--include build/makelib/image.mk
-img.build:
+UP_VERSION = v0.14.0
+UP_CHANNEL = stable
+
+-include build/makelib/k8s_tools.mk
+# ====================================================================================
+# Setup XPKG
+XPKG_REG_ORGS ?= xpkg.upbound.io/crossplane-contrib
+# NOTE(hasheddan): skip promoting on xpkg.upbound.io as channel tags are
+# inferred.
+XPKG_REG_ORGS_NO_PROMOTE ?= xpkg.upbound.io/crossplane-contrib
+XPKGS = $(PROJECT_NAME)
+-include build/makelib/xpkg.mk
+XPKG_IGNORE = '*/generate.yaml'
+export XPKG_IGNORE
+
+X_EXAMPLES := $(shell find ./examples -path '*.yaml' | paste -s -d ',' - )
+
+CROSSPLANE_NAMESPACE = upbound-system
+
+-include build/makelib/local.xpkg.mk
+-include build/makelib/controlplane.mk
 
 # ====================================================================================
 # Setup Go
@@ -71,37 +86,20 @@ submodules:
 	@git submodule sync
 	@git submodule update --init --recursive
 
-fetch:
-	@$(INFO) Fetch crossplane provider-aws GitRepo
-	@mkdir -p ${WORK_DIR}
-	@if [ ! -d "${WORK_DIR}/provider-aws" ]; then \
-		cd ${WORK_DIR} && git clone "https://github.com/crossplane/provider-aws.git"; \
-	fi
-	@cd ${WORK_DIR}/provider-aws && git fetch origin && git checkout $(PROVIDER_AWS_VERSION)
-	@$(OK) Fetch crossplane provider-aws GitRepo
+# We must ensure up is installed in tool cache prior to build as including the k8s_tools machinery prior to the xpkg
+# machinery sets UP to point to tool cache.
+build.init: $(UP)
 
-generate:
+generate-crds:
 	@$(INFO) Generating CRDs
 	@go run ./pkg/main.go .
 	@$(OK) Generating CRDs
 
-.PHONY: cobertura reviewable submodules fallthrough
-
 # ====================================================================================
-# Special Targets
+# End to End Testing
+uptest: build $(UPTEST) $(KUBECTL) $(KUTTL) local.xpkg.deploy.configuration.$(PROJECT_NAME)
+	@$(INFO) running automated tests
+	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) $(UPTEST) e2e ${X_EXAMPLES} --setup-script=test/setup.sh --default-timeout=2400 || $(FAIL)
+	@$(OK) running automated tests
 
-define X_GENERATION_HELP
-X Generation Targets:
-    cobertura          Generate a coverage report for cobertura applying exclusions on generated files.
-    reviewable         Ensure a PR is ready for review.
-    submodules         Update the submodules, such as the common build scripts.
-
-endef
-export X_GENERATION_HELP
-
-x-generation.help:
-	@echo "$$X_GENERATION_HELP"
-
-help-special: x-generation.help
-
-.PHONY: x-generation.help help-special
+e2e: controlplane.up uptest

@@ -1,5 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-  - command: kubectl apply -f "../../../../compositions/RDS-DBInstance/composition-dbinstance.yaml"
-  - command: kubectl apply -f "../../../../compositions/RDS-DBInstance/definition.yaml"

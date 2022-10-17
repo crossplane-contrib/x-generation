@@ -1,9 +1,0 @@
-apiVersion: kuttl.dev/v1beta1
-kind: TestStep
-commands:
-
-  - command: kubectl wait --for condition=established --timeout=20s xrd/compositeinstanceprofiles.iam.aws.example.cloud
-  - command: kubectl create ns assert-instance-profile
-  - command: kubectl apply -f ../../../../examples/iam/instance-profile.yaml
-  - command: sh -c ./resource/generate.sh
-  - command: kubectl kuttl assert  ./resource/zz-generated-assert.yaml

@@ -1,9 +1,7 @@
 ---
-apiVersion: rds.aws.example.cloud/v1alpha1
+apiVersion: rds.aws.crossplane.io/v1alpha1
 kind: DBInstance
 metadata:
-  name: example-dbinstance
-  namespace: assert-db
   labels:
     controlling.example.cloud/cost-reference: "123456789"
     controlling.example.cloud/owner: example
@@ -13,9 +11,7 @@ metadata:
     tags.example.cloud/environment: "dev"
     tags.example.cloud/protection-requirement: "dev"
     tags.example.cloud/repourl: "x-generate"
-  annotations:
-    uptest.upbound.io/conditions: "Ready=False"
-    uptest.upbound.io/post-assert-hook: "../../test/tests/package/rds-db-instance/post-assert.sh ${KUBECTL} ${KUTTL}"
+  name: INSTANCE
 spec:
   forProvider:
     region: eu-central-1
@@ -40,16 +36,24 @@ spec:
     storageType: gp2
     dbParameterGroupName: example-dbparametergroup
     applyImmediately: true
-  writeConnectionSecretToRef:
-    name: example-dbinstance-connection
+    tags:
+      - key: tags.example.cloud/account
+        value: "123456789101"
+      - key: tags.example.cloud/environment
+        value: dev
+      - key: tags.example.cloud/protection-requirement
+        value: dev
+      - key: tags.example.cloud/repourl
+        value: x-generate
+      - key: tags.example.cloud/zone
+        value: dev
+      - key: commonLocalTagA
+        value: comonLocalTagAValue
+      - key: commonLocalTagB
+        value: comonLocalTagBValue
+      - key: commonTagA
+        value: comonTagAValue
+      - key: commonTagB
+        value: comonTagBValue
   providerConfigRef:
     name: 123456789101-example
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: example-dbinstance
-  namespace: assert-db
-type: Opaque
-data:
-  password: dGVzdFBhc3N3b3JkITEyMw== # testPassword!123
