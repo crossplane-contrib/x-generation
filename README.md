@@ -85,9 +85,15 @@ The local configuration is placed in the subfolder of the composition to be crea
 | tags.globalHandling.fromLabels | "append" or "replace" | If append, the tags in tags.fromLabels are appended to the tags in the global configuration tags.fromLabels, otherwise those will be replaced |
 | tags.globalHandling.common     | "append" or "replace" | If append, the tags in labels.common are appended to the tasg in the global configuration tags.common, otherwise those will be replaced |
 
-## tests
-```
-mkdir test
-kubectl kuttl test
-```
 
+## Licensing
+
+x-generation is under the Apache 2.0 license.
+
+> The material in `pkg/functions` in x-generation is partially derived from "[crossplane-composition-generator](https://github.com/benagricola/crossplane-composition-generator)"
+
+| Property                       | Function              | Repository  |
+|--------------------------------|-----------------------|-------------|
+| pkg/functions/                 | generation functions  | [crossplane-composition-generator](https://github.com/benagricola/crossplane-composition-generator) |
+| build &                        | submodule for build   | [upbound/build](https://github.com/upbound/build) |
+| make e2e                       | kuttl-tests           | [upbound/uptest](https://github.com/upbound/uptest)|
