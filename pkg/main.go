@@ -542,10 +542,20 @@ func main() {
 		fmt.Printf("Error parsing arguments: %s", err)
 	}
 
-	iGlob := filepath.Join(inputPath, "*/**/", generatorFile)
-	ml, err := filepath.Glob(iGlob)
+	list := []string{}
+
+	err := filepath.Walk(inputPath, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Base(path) == generatorFile {
+			list = append(list, path)
+		}
+		return nil
+	})
+
 	if err != nil {
-		fmt.Printf("Error finding generator files matching %s: %s", iGlob, err)
+		fmt.Printf("Error finding generator files: %s", err)
 	}
 
 	fmt.Println(configFile)
@@ -560,7 +570,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	for _, m := range ml {
+	for _, m := range list {
 		g := (&Generator{
 			OverrideFields: []OverrideField{},
 			Compositions:   []Composition{},
