@@ -6,7 +6,9 @@
     'spec.writeConnectionSecretToRef',
     'spec.forProvider.tags',
     'spec.forProvider.tagSpecifications',
-    'spec.forProvider.tagging'
+    'spec.forProvider.tagging',
+    'spec.providerConfigRef.default',
+    'spec.publishConnectionDetailsTo.configRef.default'
   ],
 
   NameToPlural(config):: (
