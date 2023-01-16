@@ -125,19 +125,19 @@
     else
       path
   ),
-  local recurseWithPath(init, obj, path, foldFunc, filterFunc, valueFunc) = (
+  local recurseWithPath(init, obj, path, foldFunc, filterFunc, valueFunc, parent) = (
     if std.isObject(obj) then
       std.foldl(foldFunc, std.filterMap(
         function(n) (
           filterFunc(obj, path, n)
         ),
         function(n) (
-          valueFunc(obj, path, n, recurseWithPath)
+          valueFunc(obj, path, n, recurseWithPath, parent)
         ),
         std.objectFields(obj)
       ), init)
     else
-      valueFunc(obj, path, path[std.length(path) - 1], recurseWithPath)
+      valueFunc(obj, path, path[std.length(path) - 1], recurseWithPath, parent)
   ),
   GenerateSchema(obj, config, path):: (
     local ignorePaths = ignores(config);
@@ -149,7 +149,7 @@
       !std.member(ignorePaths, joinPath(fullPath, name))
     );
 
-    local valueFunc = function(object, fullPath, name, recurse) (
+    local valueFunc = function(object, fullPath, name, recurse, parent) (
       if !std.isObject(object) then
         object
       else
@@ -163,10 +163,11 @@
             updatePath(fullPath, name),
             foldFunc,
             filterFunc,
-            valueFunc
+            valueFunc,
+            parent
           ) }
     );
-    recurseWithPath({}, obj, path, foldFunc, filterFunc, valueFunc)
+    recurseWithPath({}, obj, path, foldFunc, filterFunc, valueFunc, "")
   ),
   GeneratePatchPaths(obj, config, path):: (
     local filterFunc = function(object, fullPath, name) (
@@ -178,14 +179,15 @@
       else
         r + [n]
     );
-    local valueFunc = function(object, fullPath, name, recurse) (
+    local valueFunc = function(object, fullPath, name, recurse, parent) (
       local o = object[name];
-      if 'type' in o && o.type == 'object' && !('additionalProperties' in object[name]) || name == 'properties' then
-        recurse([], object[name], updatePath(fullPath, name), foldFunc, filterFunc, valueFunc)
+      if 'type' in o && o.type == 'object' && !('additionalProperties' in object[name]) || (name == 'properties' && parent != 'properties') then
+        recurse([], object[name], updatePath(fullPath, name), foldFunc, filterFunc, valueFunc, name)
       else
-        joinPath(fullPath, name)
+        if (name != 'default' || parent == 'properties') then
+          joinPath(fullPath, name)
     );
-    recurseWithPath([], obj, path, foldFunc, filterFunc, valueFunc)
+    recurseWithPath([], obj, path, foldFunc, filterFunc, valueFunc,"")
   ),
   SetDefaults(config):: (
     local defaultValues = values(config);
