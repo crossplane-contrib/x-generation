@@ -1,4 +1,4 @@
-group: kafka.aws.dkb.cloud
+group: kafka.aws.example.cloud
 name: Configuration
 version: v1alpha1
 provider:

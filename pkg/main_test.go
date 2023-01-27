@@ -2494,6 +2494,7 @@ func Test_tryProperties(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("could not load definition.yaml file")
+				return
 			}
 
 			var newCRD cv1.CompositeResourceDefinition
@@ -2501,6 +2502,7 @@ func Test_tryProperties(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("could not parse definition.yaml file")
+				return
 			}
 
 			openApiSchema := newCRD.Spec.Versions[0].Schema.OpenAPIV3Schema
@@ -2510,6 +2512,7 @@ func Test_tryProperties(t *testing.T) {
 			err = yaml.Unmarshal(openApiSchema.Raw, &properties)
 			if err != nil {
 				t.Errorf("could not unmarshal properties")
+				return
 			}
 
 			if spec, ok := properties.Properties["spec"]; ok {
