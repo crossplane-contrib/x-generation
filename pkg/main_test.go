@@ -2,9 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
+	cv1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/ghodss/yaml"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
@@ -2276,4 +2282,422 @@ func Test_checkConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_tryProperties(t *testing.T) {
+	type args struct {
+		crd     extv1.CustomResourceDefinition
+		version string
+	}
+	tests := []struct {
+		name string
+		args args
+		want *extv1.JSONSchemaProps
+	}{
+		{
+			name: "Should have default property",
+			args: args{
+				crd: extv1.CustomResourceDefinition{
+					Spec: extv1.CustomResourceDefinitionSpec{
+						Versions: []extv1.CustomResourceDefinitionVersion{
+							{
+								Name: "testv1",
+								AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
+									JSONPath: ".metadata.annotations.crossplane.io/external-name",
+									Name:     "EXTERNAL-NAME",
+									Type:     "string",
+								}},
+								Schema: &extv1.CustomResourceValidation{
+									OpenAPIV3Schema: &extv1.JSONSchemaProps{
+										Properties: map[string]extv1.JSONSchemaProps{
+											"spec": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"forProvider": {
+														Description: "For Provider property",
+														Properties: map[string]extv1.JSONSchemaProps{
+															"default": {
+																Description: "This is a property called properties",
+																Type:        "array",
+																Items: &extv1.JSONSchemaPropsOrArray{
+																	Schema: &extv1.JSONSchemaProps{
+																		Type:        "object",
+																		Description: "This is an item of the property properties",
+																		Properties: map[string]extv1.JSONSchemaProps{
+																			"arrayProp": {
+																				Type: "string",
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											"status": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"name": {
+														Type: "string",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				version: "v1alpha1",
+			},
+			want: &extv1.JSONSchemaProps{
+				Description: "For Provider property",
+				Properties: map[string]extv1.JSONSchemaProps{
+					"default": {
+						Description: "This is a property called properties",
+						Type:        "array",
+						Items: &extv1.JSONSchemaPropsOrArray{
+							Schema: &extv1.JSONSchemaProps{
+								Type:        "object",
+								Description: "This is an item of the property properties",
+								Properties: map[string]extv1.JSONSchemaProps{
+									"arrayProp": {
+										Type: "string",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Should have properties property",
+			args: args{
+				crd: extv1.CustomResourceDefinition{
+					Spec: extv1.CustomResourceDefinitionSpec{
+						Versions: []extv1.CustomResourceDefinitionVersion{
+							{
+								Name: "testv1",
+								AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
+									JSONPath: ".metadata.annotations.crossplane.io/external-name",
+									Name:     "EXTERNAL-NAME",
+									Type:     "string",
+								}},
+								Schema: &extv1.CustomResourceValidation{
+									OpenAPIV3Schema: &extv1.JSONSchemaProps{
+										Properties: map[string]extv1.JSONSchemaProps{
+											"spec": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"forProvider": {
+														Description: "For Provider property",
+														Properties: map[string]extv1.JSONSchemaProps{
+															"properties": {
+																Description: "This is a property called properties",
+																Type:        "array",
+																Items: &extv1.JSONSchemaPropsOrArray{
+																	Schema: &extv1.JSONSchemaProps{
+																		Type:        "object",
+																		Description: "This is an item of the property properties",
+																		Properties: map[string]extv1.JSONSchemaProps{
+																			"arrayProp": {
+																				Type: "string",
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+											"status": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"name": {
+														Type: "string",
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				version: "v1alpha1",
+			},
+			want: &extv1.JSONSchemaProps{
+				Description: "For Provider property",
+				Properties: map[string]extv1.JSONSchemaProps{
+					"properties": {
+						Description: "This is a property called properties",
+						Type:        "array",
+						Items: &extv1.JSONSchemaPropsOrArray{
+							Schema: &extv1.JSONSchemaProps{
+								Type:        "object",
+								Description: "This is an item of the property properties",
+								Properties: map[string]extv1.JSONSchemaProps{
+									"arrayProp": {
+										Type: "string",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			crdSource, err := json.Marshal(tt.args.crd)
+			if err != nil {
+				t.Errorf("could not marshal crdSource")
+			}
+			tempDir, err := os.MkdirTemp("", "g-generation*")
+			if err != nil {
+				t.Errorf("could not generate tempDir")
+			}
+			plural := "TestObjects"
+			g := Generator{
+				Group:       "example.cloud",
+				Name:        "TestObject",
+				Version:     "testv1",
+				crdSource:   string(crdSource),
+				configPath:  tempDir,
+				tagType:     "",
+				tagProperty: "",
+				Provider: ProviderConfig{
+					CRD: CrdConfig{
+						Version: "testv1",
+					},
+				},
+				Plural:         &plural,
+				Compositions:   []Composition{},
+				OverrideFields: []OverrideField{},
+			}
+
+			gConfig := GeneratorConfig{
+				CompositionIdentifier: "example.cloud",
+			}
+
+			cwd, _ := os.Getwd()
+
+			sp := filepath.Join(cwd, "functions")
+			g.Exec(&gConfig, sp, "", "")
+
+			path := filepath.Join(tempDir, "definition.yaml")
+			y, err := ioutil.ReadFile(path)
+
+			if err != nil {
+				t.Errorf("could not load definition.yaml file")
+				return
+			}
+
+			var newCRD cv1.CompositeResourceDefinition
+			err = yaml.Unmarshal(y, &newCRD)
+
+			if err != nil {
+				t.Errorf("could not parse definition.yaml file")
+				return
+			}
+
+			openApiSchema := newCRD.Spec.Versions[0].Schema.OpenAPIV3Schema
+
+			var properties extv1.JSONSchemaProps
+
+			err = yaml.Unmarshal(openApiSchema.Raw, &properties)
+			if err != nil {
+				t.Errorf("could not unmarshal properties")
+				return
+			}
+
+			if spec, ok := properties.Properties["spec"]; ok {
+				if forProvider, ok := spec.Properties["forProvider"]; ok {
+					sourceJSON, err := json.Marshal(forProvider)
+					if err != nil {
+						t.Error("source cannot be marshaled")
+					}
+					wantJSON, err := json.Marshal(tt.want)
+					if err != nil {
+						t.Error("want cannot be marshaled")
+					}
+					patchJSON, err := jsonpatch.CreateMergePatch(wantJSON, sourceJSON)
+					if err != nil {
+						t.Error("error generating patch")
+					}
+					if string(patchJSON) != "{}" {
+						t.Errorf("objects not the same: %s", patchJSON)
+						return
+					}
+				}
+			}
+			err = os.Remove(path)
+			if err != nil {
+				t.Error("could not delete definition file")
+			}
+			err = os.Remove(tempDir)
+			if err != nil {
+				t.Error("could not delete temp directory")
+			}
+		})
+	}
+}
+func Test_noDefaultPatch(t *testing.T) {
+	type args struct {
+		crd     extv1.CustomResourceDefinition
+		version string
+	}
+	testData := struct {
+		name string
+		args args
+	}{
+
+		name: "Should have properties property",
+		args: args{
+			crd: extv1.CustomResourceDefinition{
+				Spec: extv1.CustomResourceDefinitionSpec{
+					Versions: []extv1.CustomResourceDefinitionVersion{
+						{
+							Name: "testv1",
+							AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
+								JSONPath: ".metadata.annotations.crossplane.io/external-name",
+								Name:     "EXTERNAL-NAME",
+								Type:     "string",
+							}},
+							Schema: &extv1.CustomResourceValidation{
+								OpenAPIV3Schema: &extv1.JSONSchemaProps{
+									Properties: map[string]extv1.JSONSchemaProps{
+										"spec": {
+											Properties: map[string]extv1.JSONSchemaProps{
+												"providerConfigRef": {
+													Default: &extv1.JSON{
+														Raw: []byte("{\"name\": \"default\"}"),
+													},
+													Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
+													Type:        "object",
+													Properties: map[string]extv1.JSONSchemaProps{
+														"name": {
+															Type:        "string",
+															Description: "Name of the referenced object.",
+														},
+														"policy": {
+															Type:        "string",
+															Description: "description: Policies for referencing.",
+														},
+													},
+												},
+											},
+										},
+										"status": {
+											Properties: map[string]extv1.JSONSchemaProps{
+												"name": {
+													Type: "string",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			version: "v1alpha1",
+		},
+	}
+	t.Run(testData.name, func(t *testing.T) {
+
+		crdSource, err := json.Marshal(testData.args.crd)
+		if err != nil {
+			t.Errorf("could not marshal crdSource")
+		}
+		tempDir, err := os.MkdirTemp("", "g-generation*")
+		if err != nil {
+			t.Errorf("could not generate tempDir")
+		}
+		plural := "TestObjects"
+		g := Generator{
+			Group:       "example.cloud",
+			Name:        "TestObject",
+			Version:     "testv1",
+			crdSource:   string(crdSource),
+			configPath:  tempDir,
+			tagType:     "",
+			tagProperty: "",
+			Provider: ProviderConfig{
+				CRD: CrdConfig{
+					Version: "testv1",
+				},
+			},
+			Plural: &plural,
+			Compositions: []Composition{
+				{
+					Name:     "configuration",
+					Provider: "sop",
+					Default:  true,
+				},
+			},
+			OverrideFields: []OverrideField{},
+		}
+
+		gConfig := GeneratorConfig{
+			CompositionIdentifier: "example.cloud",
+		}
+
+		cwd, _ := os.Getwd()
+
+		sp := filepath.Join(cwd, "functions")
+		g.Exec(&gConfig, sp, "", "")
+
+		path := filepath.Join(tempDir, "composition-configuration.yaml")
+		y, err := ioutil.ReadFile(path)
+
+		if err != nil {
+			t.Errorf("could not load definition.yaml file")
+		}
+
+		var newComposition cv1.Composition
+		err = yaml.Unmarshal(y, &newComposition)
+
+		if err != nil {
+			t.Errorf("could not parse definition.yaml file")
+		}
+
+		patchsets := newComposition.Spec.PatchSets
+
+		var parameterPatchSet *cv1.PatchSet
+
+		for _, patchset := range patchsets {
+			if patchset.Name == "Parameters" {
+				parameterPatchSet = &patchset
+				break
+			}
+		}
+
+		if parameterPatchSet != nil {
+			for _, patch := range parameterPatchSet.Patches {
+				if *patch.FromFieldPath == "spec.providerConfigRef.default" {
+					t.Error("There should be no patch for a default property")
+					return
+				}
+			}
+		}
+
+		err = os.Remove(path)
+		if err != nil {
+			t.Error("could not delete definition file")
+		}
+		definitionPath := filepath.Join(tempDir, "definition.yaml")
+		err = os.Remove(definitionPath)
+		if err != nil {
+			t.Error("could not delete composition file")
+		}
+		err = os.Remove(tempDir)
+		if err != nil {
+			t.Error("could not delete temp directory")
+		}
+	})
 }

@@ -1,0 +1,12 @@
+group: kafka.aws.example.cloud
+name: Configuration
+version: v1alpha1
+provider:
+  crd:
+    file: kafka.aws.crossplane.io_configurations.yaml
+    version: v1alpha1
+ignore: false
+compositions:
+  - name: configuration
+    provider: sop
+    default: true
