@@ -1,0 +1,19 @@
+group: zpa.example.cloud
+name: SegmentGroup
+version: v1alpha1
+provider:
+  baseURL: https://raw.githubusercontent.com/crossplane-contrib/%s/%s/package/crds/%s
+  name: provider-zpa
+  version: v0.4.0
+  crd:
+    file: zpa.crossplane.io_segmentgroups.yaml
+    version: v1alpha1
+patchExternalName: false
+overrideFields:
+  - path: spec.forProvider.enabled
+    value: true
+    ignore: true
+compositions:
+  - name: segmentgroup
+    provider: sop
+    default: true
