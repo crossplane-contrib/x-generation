@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"testing"
 
 	cv1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
@@ -2484,9 +2483,9 @@ func Test_tryProperties(t *testing.T) {
 				CompositionIdentifier: "example.cloud",
 			}
 
-			_, b, _, _ := runtime.Caller(0)
+			cwd, _ := os.Getwd()
 
-			sp := filepath.Join(filepath.Dir(b), "functions")
+			sp := filepath.Join(cwd, "functions")
 			g.Exec(&gConfig, sp, "", "")
 
 			path := filepath.Join(tempDir, "definition.yaml")
@@ -2648,9 +2647,9 @@ func Test_noDefaultPatch(t *testing.T) {
 			CompositionIdentifier: "example.cloud",
 		}
 
-		_, b, _, _ := runtime.Caller(0)
+		cwd, _ := os.Getwd()
 
-		sp := filepath.Join(filepath.Dir(b), "functions")
+		sp := filepath.Join(cwd, "functions")
 		g.Exec(&gConfig, sp, "", "")
 
 		path := filepath.Join(tempDir, "composition-configuration.yaml")
