@@ -8,6 +8,7 @@
     'spec.forProvider.tagSpecifications',
     'spec.forProvider.tagging',
     'spec.providerConfigRef.default',
+    'spec.providerRef',
     'spec.publishConnectionDetailsTo.configRef.default'
   ],
 
@@ -149,9 +150,34 @@
       !std.member(ignorePaths, joinPath(fullPath, name))
     );
 
+    local ignorPathForRequired = function(ignorePath, reqired) (
+
+      local aux = function(arr , index )  (
+        local elem = arr[index];
+        if index == std.length(arr) - 2 then
+          elem
+        else
+          elem + "." + aux(arr, index + 1)
+      );
+      aux(ignorePath,0)
+    );
+
     local valueFunc = function(object, fullPath, name, recurse, parent) (
       if !std.isObject(object) then
-        object
+        if name == "required" then
+        // filter ignored values from required array
+        local ignorePath = ignorPathForRequired(fullPath,object);
+        std.filterMap(
+            function(n) (
+              !std.member(ignorePaths, ignorePath+"."+n)
+            ),
+            function(n) (
+              n
+            ),
+            object,
+          )
+        else
+          object
       else
         local jp = joinPath(fullPath, name);
         if jp in overridePaths then
@@ -165,7 +191,7 @@
             filterFunc,
             valueFunc,
             parent
-          ) }
+          )}
     );
     recurseWithPath({}, obj, path, foldFunc, filterFunc, valueFunc, "")
   ),
