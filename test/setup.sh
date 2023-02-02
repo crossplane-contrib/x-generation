@@ -7,6 +7,9 @@ ${KUBECTL} wait configuration.pkg x-generation --for=condition=Healthy --timeout
 ${KUBECTL} wait configuration.pkg x-generation --for=condition=Installed --timeout 5m
 ${KUBECTL} wait "provider.pkg.crossplane.io/crossplane-contrib-provider-aws" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.aws.crossplane.io
+
+${KUBECTL} get pkgrev
+
 ${KUBECTL} wait "provider.pkg.crossplane.io/crossplane-contrib-provider-zpa" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.zpa.crossplane.io
 
