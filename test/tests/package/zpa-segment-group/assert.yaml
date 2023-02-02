@@ -1,0 +1,26 @@
+---
+apiVersion: zpa.crossplane.io/v1alpha1
+kind: SegmentGroup
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: SegmentGroup
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+  name: example-segment
+spec:
+  deletionPolicy: Delete
+  forProvider:
+    name: SEGMENTGROUP
+    configSpace: DEFAULT
+    description: This SegmenGroup is managed by SOP Platform
+    enabled: true
+    tcpKeepAliveEnabled: "0"
+  providerConfigRef:
+    name: 123456789101-example

@@ -1,0 +1,23 @@
+---
+apiVersion: zpa.example.cloud/v1alpha1
+kind: SegmentGroup
+metadata:
+  name: example-segment
+  namespace: assert-zpa
+  labels:
+    controlling.example.cloud/cost-reference: "123456789"
+    controlling.example.cloud/owner: example
+    controlling.example.cloud/product: example
+    tags.example.cloud/account: "123456789101"
+    tags.example.cloud/zone: "dev"
+    tags.example.cloud/environment: "dev"
+    tags.example.cloud/protection-requirement: "dev"
+    tags.example.cloud/repourl: "x-generate"
+  annotations:
+    uptest.upbound.io/conditions: "Ready=False"
+    uptest.upbound.io/post-assert-hook: "../../test/tests/package/zpa-segment-group/post-assert.sh ${KUBECTL} ${KUTTL}"
+spec:
+  forProvider:
+    name: SEGMENTGROUP
+  providerConfigRef:
+    name: 123456789101-example
