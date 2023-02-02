@@ -25,3 +25,5 @@ spec:
   dependsOn:
     - provider:  xpkg.upbound.io/crossplane-contrib/provider-aws
       version: ">=v0.32.0"
+    - provider:  xpkg.upbound.io/crossplane-contrib/provider-zpa
+      version: ">=v0.4.0"
