@@ -19,5 +19,8 @@ metadata:
 spec:
   forProvider:
     name: SEGMENTGROUP
+    configSpace: DEFAULT
+    tcpKeepAliveEnabled: "0"
+    description: This SegmenGroup is managed by SOP Platform
   providerConfigRef:
     name: 123456789101-example
