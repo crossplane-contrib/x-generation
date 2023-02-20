@@ -10,3 +10,4 @@ compositions:
   - name: configuration
     provider: sop
     default: true
+readinessCheck: false

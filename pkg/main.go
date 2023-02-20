@@ -116,6 +116,7 @@ type Generator struct {
 	Tags                 LocalTagConfig   `yaml:"tags,omitempty" json:"tags,omitempty"`
 	Labels               LocalLabelConfig `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Provider             ProviderConfig   `yaml:"provider" json:"provider"`
+	ReadinessCheck       *bool            `yaml:"readinessCheck, omitempty" json:"readinessCheck,omitempty"`
 
 	crdSource   string
 	configPath  string
@@ -355,6 +356,12 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 	if err != nil {
 		fmt.Printf("Error creating jsonnet input: %s", err)
 	}
+	readinessCheck := "true"
+	if g.ReadinessCheck != nil {
+		if !*g.ReadinessCheck {
+			readinessCheck = "false"
+		}
+	}
 	vm.ExtVar("config", string(j))
 	vm.ExtVar("crd", g.crdSource)
 	vm.ExtVar("globalLabels", getJsonStringFromList(&globalLabels))
@@ -368,6 +375,7 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 	vm.ExtVar("tagType", g.tagType)
 	vm.ExtVar("tagProperty", g.tagProperty)
 	vm.ExtVar("compositionIdentifier", generatorConfig.CompositionIdentifier)
+	vm.ExtVar("readinessCheck", readinessCheck)
 
 	r, err := vm.EvaluateFile(fl)
 	if err != nil {
