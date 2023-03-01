@@ -12,7 +12,7 @@ local s = {
   commonLabels: std.parseJson(std.extVar('commonLabels')),
   globalLabels: std.parseJson(std.extVar('globalLabels')),
   compositionIdentifier: std.extVar('compositionIdentifier'),
-  readinessCheck: std.extVar('readinessCheck'),
+  readinessChecks: std.extVar('readinessChecks'),
 };
 
 local plural = k8s.NameToPlural(s.config);
@@ -189,7 +189,7 @@ local definitionStatus = k8s.GenerateSchema(
                 'toFieldPath',
                 'Optional'
             )else []),
-          [if s.readinessCheck == "false" then "readinessCheck"]: ["None"],
+          [if s.readinessChecks == "false" then "readinessChecks"]: [{type:"None"}],
           [if std.objectHas(s.config, "connectionSecretKeys") then "connectionDetails"]:
             [
               {
