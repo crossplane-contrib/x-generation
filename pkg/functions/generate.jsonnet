@@ -189,7 +189,7 @@ local definitionStatus = k8s.GenerateSchema(
                 'toFieldPath',
                 'Optional'
             )else []),
-          [if s.readinessChecks == "false" then "readinessChecks"]: ["None"],
+          [if s.readinessChecks == "false" then "readinessChecks"]: [{type:"None"}],
           [if std.objectHas(s.config, "connectionSecretKeys") then "connectionDetails"]:
             [
               {
