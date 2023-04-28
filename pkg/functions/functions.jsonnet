@@ -356,9 +356,9 @@
         tagKey: tag,
         tagValue: commonTags[tag],
       } for tag in std.objectFields(commonTags) ],
-      [if tagType == "stringObject" && std.length(commonTags) > 0 then "tags"]: [{
+      [if tagType == "stringObject" && std.length(commonTags) > 0 then "tags"]: {
         [tag]: commonTags[tag],
-      } for tag in std.objectFields(commonTags) ]
+      for tag in std.objectFields(commonTags) }
     };
     if tagProperty == "tag" then generatedTags
     else if tagProperty == "tagSet" then {

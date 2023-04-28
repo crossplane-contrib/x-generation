@@ -1,5 +1,5 @@
 ---
-apiVersion: iam.aws.crossplane.io/v1beta1
+apiVersion: iam.aws.upbound.io/v1beta1
 kind: Policy
 metadata:
   labels:
@@ -20,33 +20,20 @@ spec:
   deletionPolicy: Delete
   forProvider:
     description: "my example"
-    name: "my-example-policy"
     tags:
-      - key: tags.example.cloud/account
-        value: "123456789101"
-      - key: tags.example.cloud/environment
-        value: dev
-      - key: tags.example.cloud/protection-requirement
-        value: dev
-      - key: tags.example.cloud/repourl
-        value: x-generate
-      - key: tags.example.cloud/zone
-        value: dev
-      - key: commonLocalTagA
-        value: comonLocalTagAValue
-      - key: commonLocalTagB
-        value: comonLocalTagBValue
-      - key: commonTagA
-        value: comonTagAValue
-      - key: commonTagB
-        value: comonTagBValue
-      - key: crossplane-kind
-        value: policy.iam.aws.crossplane.io
-      - key: crossplane-name
-        value: example-policy
-      - key: crossplane-providerconfig
-        value: 123456789101-example
-    document: |
+      tags.example.cloud/account: "123456789101"
+      tags.example.cloud/environment: dev
+      tags.example.cloud/protection-requirement: dev
+      tags.example.cloud/repourl: x-generate
+      tags.example.cloud/zone: dev
+      commonLocalTagA: comonLocalTagAValue
+      commonLocalTagB: comonLocalTagBValue
+      commonTagA: comonTagAValue
+      commonTagB: comonTagBValue
+      crossplane-kind: policy.iam.aws.upbound.io
+      crossplane-name: example-policy
+      crossplane-providerconfig: 123456789101-example
+    policy: |
       {
         "Version": "2012-10-17",
         "Statement": [

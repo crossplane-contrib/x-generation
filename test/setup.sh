@@ -11,6 +11,10 @@ sleep 5
 ${KUBECTL} wait "provider.pkg.crossplane.io/crossplane-contrib-provider-zpa" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.zpa.crossplane.io
 
+${KUBECTL} wait "provider.pkg.crossplane.io/upbound-provider-aws" --for=condition=healthy --timeout=300s
+${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.aws.upbound.io
+sleep 5
+
 echo "Creating a secret default provider config"
 cat <<EOF | ${KUBECTL} apply -f -
 apiVersion: v1
@@ -62,6 +66,33 @@ spec:
     source: None
   customerId: testID
   host: zpa.local
+EOF
+
+echo "Creating a secret default offical provider awsconfig"
+cat <<EOF | ${KUBECTL} apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: offical-aws-creds
+  namespace: upbound-system
+type: Opaque
+stringData:
+  key: nocreds
+EOF
+
+echo "Creating a default provider config"
+cat <<EOF | ${KUBECTL} apply -f -
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: 123456789101-example
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: upbound-system
+      name: offical-aws-creds
+      key: key
 EOF
 
 ${KUBECTL} create ns assert-db || true

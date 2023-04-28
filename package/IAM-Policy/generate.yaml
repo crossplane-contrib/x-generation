@@ -17,23 +17,10 @@ compositions:
     default: true
 
 overrideFieldsInClaim:
-
-  # - claimPath: spec.forProvider.name
-  #   managedPath: spec.forProvider.forceDetachPolicies
-  #   overrideSettings:
-  #     patches:
-  #       - fromFieldPath: spec.forProvider.newProp[0]
-  #         policy:
-  #           fromFieldPath: Optional
-  #         toFieldPath: spec.forProvider.forceDetachPolicies
-  #         type: FromCompositeFieldPath
-  #       - fromFieldPath: spec.forProvider.newProp[1]
-  #         policy:
-  #           fromFieldPath: Optional
-  #         toFieldPath: spec.forProvider.forceDetachPolicies
-  #         type: FromCompositeFieldPath
   - claimPath: spec.forProvider.name
     overrideSettings:
       property:
         description: Deprecated
         type: string
+  - claimPath: spec.forProvider.document
+    managedPath: spec.forProvider.policy
