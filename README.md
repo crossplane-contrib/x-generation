@@ -84,7 +84,163 @@ The local configuration is placed in the subfolder of the composition to be crea
 | tags.common                    | object of strings     | For each property of the object a tag with the given value is created in the resource |
 | tags.globalHandling.fromLabels | "append" or "replace" | If append, the tags in tags.fromLabels are appended to the tags in the global configuration tags.fromLabels, otherwise those will be replaced |
 | tags.globalHandling.common     | "append" or "replace" | If append, the tags in labels.common are appended to the tasg in the global configuration tags.common, otherwise those will be replaced |
+| overrideFieldsInClaim          | object                | This optional property can be used to override the names in the composite and the claim or add properties. See description below |
 
+
+## overrideFieldsInClaim
+The overrideFieldsInClaim property can be used to change the name of a property in the claim and the composite or to add properties in the claim and composite. This can for example be helpfull if one wants to change the provider of the managed resource without changing the crds for the claim and the composite. OverrideFieldsInClaim has the following properties:
+
+| Property                  | Type        | Description |
+|---------------------------|-------------|-------------|
+| claimPath                 | string      | The path of the property in the claim and the composite |
+| managedPath               | string      | The path of the property in the managed resource. Currently only the name of the property is allowed to change between the claimPath and the managedPath |
+| description               | string      | An optional description to override the description of the property from the managed resource |
+| overrideSettings          | object      | This allows to override the definition of the new property and the patches applied in the composition for it |
+| overrideSettings.property | interface{} | The definition of the property |
+| overrideSettings.patches  | []Patch     | A list of pathces that will be placed inside the composition for this property |
+
+To simply rename a property, only claimPath and managedPath is needed. The definition and description is taken from the property in the managed resource, a patch is applied to patch from the new property in the composite to the old name in the managed resource. E.g.:
+
+```yaml
+overrideFieldsInClaim:
+  - claimPath: spec.forProvider.assumeRolePolicyDocument # user sees assumeRolePolicyDocument
+    managedPath: spec.forProvider.assumeRolePolicy # managed resource has assumeRolePolicy
+```
+leads to
+
+```yaml
+## definition.yaml
+...
+forProvider:
+  properties:
+    assumeRolePolicyDocument:
+      description: Policy that grants an entity permission to assume
+        the role.
+      type: string
+  ...
+  required:
+    - assumeRolePolicyDocument
+  ...
+## compsition.yaml
+...
+patches:
+  - fromFieldPath: spec.forProvider.assumeRolePolicyDocument
+    policy:
+      fromFieldPath: Optional
+    toFieldPath: spec.forProvider.assumeRolePolicy
+    type: FromCompositeFieldPath
+...
+```
+ If `description` is added, this overrides the decription form the managed resource:
+```yaml
+overrideFieldsInClaim:
+  - claimPath: spec.forProvider.assumeRolePolicyDocument # user sees assumeRolePolicyDocument
+    managedPath: spec.forProvider.assumeRolePolicy # managed resource has assumeRolePolicy
+    description: The policy document that grants an entity permission to assume
+        the role.
+```
+leads to
+
+```yaml
+## definition.yaml
+...
+forProvider:
+  properties:
+    assumeRolePolicyDocument:
+      description: The policy document that grants an entity permission to assume
+        the role.
+      type: string
+  ...
+  required:
+    - assumeRolePolicyDocument
+  ...
+## compsition.yaml
+...
+patches:
+  - fromFieldPath: spec.forProvider.assumeRolePolicyDocument
+    policy:
+      fromFieldPath: Optional
+    toFieldPath: spec.forProvider.assumeRolePolicy
+    type: FromCompositeFieldPath
+...
+```
+
+If not only the name and the description of a property should change, `overrideSettings` with `property` and `patches` can be used:
+
+```yaml
+overrideFieldsInClaim:
+- claimPath: spec.forProvider.newProp
+    managedPath: spec.forProvider.forceDetachPolicies
+    overrideSettings:
+      property:
+        description: New Property
+        type: array
+        items:
+          type: boolean
+      patches:
+        - fromFieldPath: spec.forProvider.newProp[0]
+          policy:
+            fromFieldPath: Optional
+          toFieldPath: spec.forProvider.forceDetachPolicies
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.forProvider.newProp[1]
+          policy:
+            fromFieldPath: Optional
+          toFieldPath: spec.forProvider.forceDetachPolicies
+          type: FromCompositeFieldPath
+```
+leads to
+```yaml
+## definition.yaml
+...
+forProvider:
+  properties:
+    newProp:
+      description: New Property
+      items:
+        type: boolean
+      type: array
+  ...
+## compsition.yaml
+...
+patches:
+  - fromFieldPath: spec.forProvider.newProp[0]
+    policy:
+      fromFieldPath: Optional
+    toFieldPath: spec.forProvider.forceDetachPolicies
+    type: FromCompositeFieldPath
+  - fromFieldPath: spec.forProvider.newProp[1]
+    policy:
+      fromFieldPath: Optional
+    toFieldPath: spec.forProvider.forceDetachPolicies
+    type: FromCompositeFieldPath
+...
+```
+
+If a property is no longer used by the managed resource but should be keept in the composite and the claim to not break existing resources, 
+
+```yaml
+overrideFieldsInClaim:
+  - claimPath: spec.forProvider.namedProp
+    overrideSettings:
+      property:
+        description: Deprecated
+        type: string
+```
+leads to
+```yaml
+## definition.yaml
+...
+forProvider:
+  namedProp:
+    description: Deprecated
+    type: string
+...
+## compsition.yaml
+...
+patches: []
+...
+```
 
 ## Licensing
 

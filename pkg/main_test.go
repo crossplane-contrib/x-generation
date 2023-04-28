@@ -2474,9 +2474,10 @@ func Test_tryProperties(t *testing.T) {
 						Version: "testv1",
 					},
 				},
-				Plural:         &plural,
-				Compositions:   []Composition{},
-				OverrideFields: []OverrideField{},
+				Plural:                &plural,
+				Compositions:          []Composition{},
+				OverrideFields:        []OverrideField{},
+				OverrideFieldsInClaim: []overrideFieldInClaim{},
 			}
 
 			gConfig := GeneratorConfig{
@@ -2640,7 +2641,8 @@ func Test_noDefaultPatch(t *testing.T) {
 					Default:  true,
 				},
 			},
-			OverrideFields: []OverrideField{},
+			OverrideFields:        []OverrideField{},
+			OverrideFieldsInClaim: []overrideFieldInClaim{},
 		}
 
 		gConfig := GeneratorConfig{

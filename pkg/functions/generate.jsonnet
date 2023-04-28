@@ -126,7 +126,8 @@ local definitionStatus = k8s.GenerateSchema(
               definitionSpec.properties,
               s.config,
               ['spec']
-            )
+            ),
+            s.config
           ),
         },
         {

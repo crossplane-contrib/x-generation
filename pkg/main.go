@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"time"
 
+	crossplanev1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
 	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-jsonnet"
@@ -102,26 +103,39 @@ type ProviderConfig struct {
 }
 
 type Generator struct {
-	Group                string           `yaml:"group" json:"group"`
-	Name                 string           `yaml:"name" json:"name"`
-	Plural               *string          `yaml:"plural,omitempty" json:"plural,omitempty"`
-	Version              string           `yaml:"version" json:"version"`
-	ScriptFileName       *string          `yaml:"scriptFile,omitempty"`
-	ConnectionSecretKeys *[]string        `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
-	Ignore               bool             `yaml:"ignore"`
-	PatchExternalName    *bool            `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
-	UIDFieldPath         *string          `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
-	OverrideFields       []OverrideField  `yaml:"overrideFields" json:"overrideFields"`
-	Compositions         []Composition    `yaml:"compositions" json:"compositions"`
-	Tags                 LocalTagConfig   `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Labels               LocalLabelConfig `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Provider             ProviderConfig   `yaml:"provider" json:"provider"`
-	ReadinessChecks      *bool            `yaml:"readinessChecks, omitempty" json:"readinessChecks,omitempty"`
+	Group                 string                 `yaml:"group" json:"group"`
+	Name                  string                 `yaml:"name" json:"name"`
+	Plural                *string                `yaml:"plural,omitempty" json:"plural,omitempty"`
+	Version               string                 `yaml:"version" json:"version"`
+	ScriptFileName        *string                `yaml:"scriptFile,omitempty"`
+	ConnectionSecretKeys  *[]string              `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
+	Ignore                bool                   `yaml:"ignore"`
+	PatchExternalName     *bool                  `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
+	UIDFieldPath          *string                `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
+	OverrideFields        []OverrideField        `yaml:"overrideFields" json:"overrideFields"`
+	Compositions          []Composition          `yaml:"compositions" json:"compositions"`
+	Tags                  LocalTagConfig         `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Labels                LocalLabelConfig       `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Provider              ProviderConfig         `yaml:"provider" json:"provider"`
+	ReadinessChecks       *bool                  `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
+	OverrideFieldsInClaim []overrideFieldInClaim `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
 
 	crdSource   string
 	configPath  string
 	tagType     string
 	tagProperty string
+}
+
+type overrideFieldInClaim struct {
+	ClaimPath        string            `yaml:"claimPath" json:"claimPath"`
+	ManagedPath      *string           `yaml:"managedPath,omitempty" json:"managedPath,omitempty"`
+	OverrideSettings *OverrideSettings `yaml:"overrideSettings,omitempty" json:"overrideSettings,omitempty"`
+	Description      *string           `yaml:"description,omitempty" json:"description,omitempty"`
+}
+
+type OverrideSettings struct {
+	Property *interface{}         `yaml:"property,omitempty" json:"property,omitempty"`
+	Patches  []crossplanev1.Patch `yaml:"patches" json:"patches"`
 }
 
 type jsonnetOutput map[string]interface{}
@@ -353,6 +367,9 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 	vm := jsonnet.MakeVM()
 
 	j, err := json.Marshal(&g)
+	// a := string(j)
+	// if a != "" {
+	// }
 	if err != nil {
 		fmt.Printf("Error creating jsonnet input: %s", err)
 	}
@@ -580,8 +597,9 @@ func main() {
 
 	for _, m := range list {
 		g := (&Generator{
-			OverrideFields: []OverrideField{},
-			Compositions:   []Composition{},
+			OverrideFields:        []OverrideField{},
+			Compositions:          []Composition{},
+			OverrideFieldsInClaim: []overrideFieldInClaim{},
 		}).LoadConfig(m)
 		if g.Ignore {
 			fmt.Printf("Generator for %s asks to be ignored, skipping...", g.Name)
