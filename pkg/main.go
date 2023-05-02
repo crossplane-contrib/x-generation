@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	crossplanev1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
@@ -417,6 +418,23 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 
 	for fn, fc := range jso {
 		yo, err := yaml.Marshal(fc)
+
+		// Override x-kubernetes-validations fields if OverrideFieldsInClaim is given
+		if g.OverrideFieldsInClaim != nil && fn == "definition" {
+			var xrd crossplanev1.CompositeResourceDefinition
+			yaml.Unmarshal(yo, &xrd)
+			updated, err := g.updateKubernetesValidation(&xrd)
+			if err != nil {
+				fmt.Printf("Error updating x-kubernetes-validations: %v", err)
+			}
+			if updated {
+				yo, err = yaml.Marshal(xrd)
+				if err != nil {
+					fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+				}
+				yaml.Unmarshal(yo, &fc)
+			}
+		}
 		if err != nil {
 			fmt.Printf("Error converting %s to YAML: %v", fn, err)
 		}
@@ -444,6 +462,62 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 			fmt.Printf("Error writing Generated File %s: %v", fp, err)
 		}
 	}
+}
+
+func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResourceDefinition) (bool, error) {
+	schemaRaw := xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Raw
+	var schema map[string]interface{}
+	err := json.Unmarshal(schemaRaw, &schema)
+	if err != nil {
+		return false, err
+	}
+	properties, ok := schema["properties"].(map[string]interface{})
+	if !ok {
+		return false, errors.New("no properties")
+	}
+
+	spec, ok := properties["spec"].(map[string]interface{})
+	if !ok {
+		return false, errors.New("no spec")
+	}
+
+	kubernetesValidations, ok := spec["x-kubernetes-validations"].([]interface{})
+
+	if !ok {
+		return false, nil
+	}
+	replaceMap := map[string]string{}
+
+	for _, override := range g.OverrideFieldsInClaim {
+		if override.ManagedPath != nil {
+			// var updatedClaimPath, updatedManagedPath string
+			updatedClaimPath := strings.Replace(override.ClaimPath, "spec", "self", 1)
+			updatedManagedPath := strings.Replace(*override.ManagedPath, "spec", "self", 1)
+			replaceMap[updatedManagedPath] = updatedClaimPath
+		}
+	}
+	validationMapArray := []map[string]interface{}{}
+	for _, validation := range kubernetesValidations {
+		validationMap := validation.(map[string]interface{})
+		rule := validationMap["rule"].(string)
+		for old, new := range replaceMap {
+			rule = strings.Replace(rule, old, new, -1)
+		}
+
+		validationMap["rule"] = rule
+		validationMapArray = append(validationMapArray, validationMap)
+	}
+	spec["x-kubernetes-validations"] = validationMapArray
+	properties["spec"] = spec
+	schema["properties"] = properties
+
+	newSchema, err := json.Marshal(schema)
+	if err != nil {
+		return false, err
+	}
+	xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Raw = newSchema
+
+	return true, nil
 }
 
 // Checks that the config for a generator is valid

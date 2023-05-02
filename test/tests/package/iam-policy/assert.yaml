@@ -30,9 +30,6 @@ spec:
       commonLocalTagB: comonLocalTagBValue
       commonTagA: comonTagAValue
       commonTagB: comonTagBValue
-      crossplane-kind: policy.iam.aws.upbound.io
-      crossplane-name: example-policy
-      crossplane-providerconfig: 123456789101-example
     policy: |
       {
         "Version": "2012-10-17",
