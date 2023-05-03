@@ -422,17 +422,24 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 		// Override x-kubernetes-validations fields if OverrideFieldsInClaim is given
 		if g.OverrideFieldsInClaim != nil && fn == "definition" {
 			var xrd crossplanev1.CompositeResourceDefinition
-			yaml.Unmarshal(yo, &xrd)
-			updated, err := g.updateKubernetesValidation(&xrd)
+			err := yaml.Unmarshal(yo, &xrd)
 			if err != nil {
-				fmt.Printf("Error updating x-kubernetes-validations: %v", err)
-			}
-			if updated {
-				yo, err = yaml.Marshal(xrd)
+				fmt.Printf("Error unmarshalling xrd %v", err)
+			} else {
+				updated, err := g.updateKubernetesValidation(&xrd)
 				if err != nil {
-					fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+					fmt.Printf("Error updating x-kubernetes-validations: %v", err)
 				}
-				yaml.Unmarshal(yo, &fc)
+				if updated {
+					yo, err = yaml.Marshal(xrd)
+					if err != nil {
+						fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+					}
+					err = yaml.Unmarshal(yo, &fc)
+					if err != nil {
+						fmt.Printf("Error unmarshalling object %v", err)
+					}
+				}
 			}
 		}
 		if err != nil {
