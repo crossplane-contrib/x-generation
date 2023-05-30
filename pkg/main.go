@@ -10,8 +10,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
+	crossplanev1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
 	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-jsonnet"
@@ -102,26 +104,39 @@ type ProviderConfig struct {
 }
 
 type Generator struct {
-	Group                string           `yaml:"group" json:"group"`
-	Name                 string           `yaml:"name" json:"name"`
-	Plural               *string          `yaml:"plural,omitempty" json:"plural,omitempty"`
-	Version              string           `yaml:"version" json:"version"`
-	ScriptFileName       *string          `yaml:"scriptFile,omitempty"`
-	ConnectionSecretKeys *[]string        `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
-	Ignore               bool             `yaml:"ignore"`
-	PatchExternalName    *bool            `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
-	UIDFieldPath         *string          `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
-	OverrideFields       []OverrideField  `yaml:"overrideFields" json:"overrideFields"`
-	Compositions         []Composition    `yaml:"compositions" json:"compositions"`
-	Tags                 LocalTagConfig   `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Labels               LocalLabelConfig `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Provider             ProviderConfig   `yaml:"provider" json:"provider"`
-	ReadinessChecks      *bool            `yaml:"readinessChecks, omitempty" json:"readinessChecks,omitempty"`
+	Group                 string                 `yaml:"group" json:"group"`
+	Name                  string                 `yaml:"name" json:"name"`
+	Plural                *string                `yaml:"plural,omitempty" json:"plural,omitempty"`
+	Version               string                 `yaml:"version" json:"version"`
+	ScriptFileName        *string                `yaml:"scriptFile,omitempty"`
+	ConnectionSecretKeys  *[]string              `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
+	Ignore                bool                   `yaml:"ignore"`
+	PatchExternalName     *bool                  `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
+	UIDFieldPath          *string                `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
+	OverrideFields        []OverrideField        `yaml:"overrideFields" json:"overrideFields"`
+	Compositions          []Composition          `yaml:"compositions" json:"compositions"`
+	Tags                  LocalTagConfig         `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Labels                LocalLabelConfig       `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Provider              ProviderConfig         `yaml:"provider" json:"provider"`
+	ReadinessChecks       *bool                  `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
+	OverrideFieldsInClaim []overrideFieldInClaim `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
 
 	crdSource   string
 	configPath  string
 	tagType     string
 	tagProperty string
+}
+
+type overrideFieldInClaim struct {
+	ClaimPath        string            `yaml:"claimPath" json:"claimPath"`
+	ManagedPath      *string           `yaml:"managedPath,omitempty" json:"managedPath,omitempty"`
+	OverrideSettings *OverrideSettings `yaml:"overrideSettings,omitempty" json:"overrideSettings,omitempty"`
+	Description      *string           `yaml:"description,omitempty" json:"description,omitempty"`
+}
+
+type OverrideSettings struct {
+	Property *interface{}         `yaml:"property,omitempty" json:"property,omitempty"`
+	Patches  []crossplanev1.Patch `yaml:"patches" json:"patches"`
 }
 
 type jsonnetOutput map[string]interface{}
@@ -353,6 +368,9 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 	vm := jsonnet.MakeVM()
 
 	j, err := json.Marshal(&g)
+	// a := string(j)
+	// if a != "" {
+	// }
 	if err != nil {
 		fmt.Printf("Error creating jsonnet input: %s", err)
 	}
@@ -400,6 +418,30 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 
 	for fn, fc := range jso {
 		yo, err := yaml.Marshal(fc)
+
+		// Override x-kubernetes-validations fields if OverrideFieldsInClaim is given
+		if g.OverrideFieldsInClaim != nil && fn == "definition" {
+			var xrd crossplanev1.CompositeResourceDefinition
+			err := yaml.Unmarshal(yo, &xrd)
+			if err != nil {
+				fmt.Printf("Error unmarshalling xrd %v", err)
+			} else {
+				updated, err := g.updateKubernetesValidation(&xrd)
+				if err != nil {
+					fmt.Printf("Error updating x-kubernetes-validations: %v", err)
+				}
+				if updated {
+					yo, err = yaml.Marshal(xrd)
+					if err != nil {
+						fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+					}
+					err = yaml.Unmarshal(yo, &fc)
+					if err != nil {
+						fmt.Printf("Error unmarshalling object %v", err)
+					}
+				}
+			}
+		}
 		if err != nil {
 			fmt.Printf("Error converting %s to YAML: %v", fn, err)
 		}
@@ -427,6 +469,62 @@ func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFil
 			fmt.Printf("Error writing Generated File %s: %v", fp, err)
 		}
 	}
+}
+
+func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResourceDefinition) (bool, error) {
+	schemaRaw := xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Raw
+	var schema map[string]interface{}
+	err := json.Unmarshal(schemaRaw, &schema)
+	if err != nil {
+		return false, err
+	}
+	properties, ok := schema["properties"].(map[string]interface{})
+	if !ok {
+		return false, errors.New("no properties")
+	}
+
+	spec, ok := properties["spec"].(map[string]interface{})
+	if !ok {
+		return false, errors.New("no spec")
+	}
+
+	kubernetesValidations, ok := spec["x-kubernetes-validations"].([]interface{})
+
+	if !ok {
+		return false, nil
+	}
+	replaceMap := map[string]string{}
+
+	for _, override := range g.OverrideFieldsInClaim {
+		if override.ManagedPath != nil {
+			// var updatedClaimPath, updatedManagedPath string
+			updatedClaimPath := strings.Replace(override.ClaimPath, "spec", "self", 1)
+			updatedManagedPath := strings.Replace(*override.ManagedPath, "spec", "self", 1)
+			replaceMap[updatedManagedPath] = updatedClaimPath
+		}
+	}
+	validationMapArray := []map[string]interface{}{}
+	for _, validation := range kubernetesValidations {
+		validationMap := validation.(map[string]interface{})
+		rule := validationMap["rule"].(string)
+		for old, new := range replaceMap {
+			rule = strings.Replace(rule, old, new, -1)
+		}
+
+		validationMap["rule"] = rule
+		validationMapArray = append(validationMapArray, validationMap)
+	}
+	spec["x-kubernetes-validations"] = validationMapArray
+	properties["spec"] = spec
+	schema["properties"] = properties
+
+	newSchema, err := json.Marshal(schema)
+	if err != nil {
+		return false, err
+	}
+	xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Raw = newSchema
+
+	return true, nil
 }
 
 // Checks that the config for a generator is valid
@@ -580,8 +678,9 @@ func main() {
 
 	for _, m := range list {
 		g := (&Generator{
-			OverrideFields: []OverrideField{},
-			Compositions:   []Composition{},
+			OverrideFields:        []OverrideField{},
+			Compositions:          []Composition{},
+			OverrideFieldsInClaim: []overrideFieldInClaim{},
 		}).LoadConfig(m)
 		if g.Ignore {
 			fmt.Printf("Generator for %s asks to be ignored, skipping...", g.Name)

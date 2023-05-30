@@ -74,14 +74,22 @@
   GenSecretPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy):: (
     [genSecretPatch(type, fieldFrom, fieldTo, srcFieldName, dstFieldName, policy)]
   ),
+   local genOptionalPatchFromConfig(fields, config) = (
+      local on = overrideNamesByClaim(config);
+   [
+      local fieldTo = if field in on then on[field].managedPath else field;
+      genPatch('FromCompositeFieldPath', field, fieldTo, 'fromFieldPath', 'toFieldPath', 'Optional')
+      for field in std.filter(function(f) (!(f in on && "overrideSettings" in on[f])), fields)
+      ] + std.flattenArrays([ on[field].overrideSettings.patches for field in std.filter(function(f) (f in on && "overrideSettings" in on[f] && "managedPath" in on[f]), fields) ])
+  ),
   local genOptionalPatchFrom(fields) = (
     [
       genPatch('FromCompositeFieldPath', field, field, 'fromFieldPath', 'toFieldPath', 'Optional')
       for field in fields
     ]
   ),
-  GenOptionalPatchFrom(fields):: (
-    genOptionalPatchFrom(fields)
+  GenOptionalPatchFrom(fields, config):: (
+    genOptionalPatchFromConfig(fields, config)
   ),
   GenOptionalPatchTo(fields):: (
     [
@@ -103,6 +111,70 @@
     [o.path]: o.override
     for o in config.overrideFields
     if 'override' in o
+  },
+  local last(s) = (
+    local list = splitPath(s);
+    local len = std.length(list);
+    {newName: list[len -1 ]}
+  ),
+  local getOverrides(o) = {
+    override:
+      if "overrideSettings" in o && "property" in o.overrideSettings  then
+       {}+ o.overrideSettings.property
+       else if "description" in o then
+       {description: o.description}
+      else {}
+  },
+   local getPath(s) = (
+      local list = splitPath(s);
+      local len = std.length(list);
+      local path = std.join(".", list[0:len-1]);
+      path
+    ),
+  local filteredNewEntries = function(config) (std.filter(function(c) (!std.objectHas(c, 'managedPath')), config.overrideFieldsInClaim)),
+  local filteredOverrideEntries = function(config) (std.filter(function(c) (std.objectHas(c, 'managedPath')), config.overrideFieldsInClaim)),
+  local newProps(config) = {
+    local filterForPath = function(path, config) [
+        last(p.claimPath) + getOverrides(p)
+        for p in std.filter(function(c) (getPath(c.claimPath) == path), filteredNewEntries(config))
+    ],
+    [getPath(o.claimPath)]: filterForPath(getPath(o.claimPath), config)
+    for o in filteredNewEntries(config)
+    //["a"]: std.toString(filteredNewEntries(config))
+    // local newMap = {};
+    // local filMap = (map, path, e) (
+    //  if std.objectHas(path) then
+    //   map[path] = map[path] + [last(e.claimPath) + getOverrides(e)]
+    // else
+    //   map[path]: [last(e.claimPath) + getOverrides(e)]
+    // )
+    //   local path = getPath(o.claimPath)
+    //   filMap(newMap,path,o)
+    // for o in filteredNewEntries,
+    // newMap
+  },
+  local overrideNames(config) = {
+    // local last(s) = {
+    //   local list = std.split(s, "."),
+    //   local len = std.length(list),
+
+    //   {newName: list[len -1]}
+    // };
+    [o.managedPath]: o + last(o.claimPath)+
+    { override:
+      if "overrideSettings" in o && "property" in o.overrideSettings  then
+       {}+ o.overrideSettings.property
+       else if "description" in o then
+
+       {description: o.description}
+
+      else {}
+    }
+    for o in filteredOverrideEntries(config)
+  },
+  local overrideNamesByClaim(config) = {
+    [o.claimPath]: o
+    for o in config.overrideFieldsInClaim
   },
   local ignores(config) = [
     o.path
@@ -150,6 +222,10 @@
       !std.member(ignorePaths, joinPath(fullPath, name))
     );
 
+    local overrideNamesPath = overrideNames(config);
+
+    local newProperties = newProps(config);
+
     local ignorPathForRequired = function(ignorePath, reqired) (
 
       local aux = function(arr , index )  (
@@ -163,10 +239,19 @@
     );
 
     local valueFunc = function(object, fullPath, name, recurse, parent) (
+
+      local stringPath = std.join(".", fullPath);
       if !std.isObject(object) then
         if name == "required" then
         // filter ignored values from required array
         local ignorePath = ignorPathForRequired(fullPath,object);
+        std.map(function(e) (
+          local jp = joinPath(fullPath[0:std.length(fullPath) -1 ], e);
+          if jp in overrideNamesPath then
+            overrideNamesPath[jp].newName
+          else
+           e
+        ),
         std.filterMap(
             function(n) (
               !std.member(ignorePaths, ignorePath+"."+n)
@@ -175,12 +260,14 @@
               n
             ),
             object,
-          )
+          ))
         else
           object
       else
         local jp = joinPath(fullPath, name);
-        if jp in overridePaths then
+        if jp in overrideNamesPath then
+          { [overrideNamesPath[jp].newName]+: object[name] +  overrideNamesPath[jp].override}
+        else if jp in overridePaths then
           { [name]+: object[name] + overridePaths[jp] }
         else
           { [name]+: recurse(
@@ -190,8 +277,24 @@
             foldFunc,
             filterFunc,
             valueFunc,
-            parent
-          )}
+            name
+          )
+          }
+          +
+          if std.objectHas(newProperties, stringPath)  && parent == "properties" then
+          {
+
+
+          //"newProp": std.toString(newProperties[fullPath]) + fullPath
+          [p.newName]: p.override
+          for p in newProperties[stringPath]
+        // [a]: a for a in newProperties
+          } else {}
+
+  // {
+  //   [prop.newName]: prop.override
+  // }
+  //  for prop in newProperties[fullPath]
     );
     recurseWithPath({}, obj, path, foldFunc, filterFunc, valueFunc, "")
   ),
@@ -253,9 +356,9 @@
         tagKey: tag,
         tagValue: commonTags[tag],
       } for tag in std.objectFields(commonTags) ],
-      [if tagType == "stringObject" && std.length(commonTags) > 0 then "tags"]: [{
+      [if tagType == "stringObject" && std.length(commonTags) > 0 then "tags"]: {
         [tag]: commonTags[tag],
-      } for tag in std.objectFields(commonTags) ]
+      for tag in std.objectFields(commonTags) }
     };
     if tagProperty == "tag" then generatedTags
     else if tagProperty == "tagSet" then {
