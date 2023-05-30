@@ -13,7 +13,7 @@ ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.z
 
 ${KUBECTL} wait "provider.pkg.crossplane.io/upbound-provider-aws" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.aws.upbound.io
-sleep 5
+sleep 60
 
 echo "Creating a secret default provider config"
 cat <<EOF | ${KUBECTL} apply -f -
