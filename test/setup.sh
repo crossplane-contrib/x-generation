@@ -11,7 +11,7 @@ sleep 5
 ${KUBECTL} wait "provider.pkg.crossplane.io/crossplane-contrib-provider-zpa" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.zpa.crossplane.io
 
-${KUBECTL} wait "provider.pkg.crossplane.io/upbound-provider-aws" --for=condition=healthy --timeout=300s
+${KUBECTL} wait "provider.pkg.crossplane.io/upbound-release-candidates-provider-aws-iam" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.aws.upbound.io
 sleep 60
 
