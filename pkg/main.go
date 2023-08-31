@@ -112,6 +112,7 @@ type Generator struct {
 	ConnectionSecretKeys  *[]string              `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
 	Ignore                bool                   `yaml:"ignore"`
 	PatchExternalName     *bool                  `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
+	PatchlName            *bool                  `yaml:"patchName,omitempty" json:"patchName,omitempty"`
 	UIDFieldPath          *string                `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
 	OverrideFields        []OverrideField        `yaml:"overrideFields" json:"overrideFields"`
 	Compositions          []Composition          `yaml:"compositions" json:"compositions"`

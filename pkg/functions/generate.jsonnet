@@ -106,15 +106,16 @@ local definitionStatus = k8s.GenerateSchema(
         apiVersion: s.config.group + '/' + s.config.version,
         kind: "Composite"+s.config.name,
       },
-      patchSets: [
-        {
+      patchSets: (if std.objectHas(s.config, 'patchName') == false || s.config.patchName == true then [{
           name: 'Name',
           patches: [{
             type: 'FromCompositeFieldPath',
             fromFieldPath: 'metadata.labels[crossplane.io/claim-name]',
             toFieldPath: if std.objectHas(s.config, 'patchExternalName') && s.config.patchExternalName == false then 'metadata.name' else 'metadata.annotations[crossplane.io/external-name]',
           }],
-        },
+        
+        }] else [])
+        +[
         {
           name: 'Common',
           patches: k8s.GenLabelsPatch(s.globalLabels)

@@ -1,0 +1,16 @@
+group: kafka.aws.example.cloud
+name: TopicAcl
+version: v1alpha1
+provider:
+  baseURL: https://raw.githubusercontent.com/crossplane-contrib/%s/%s/package/crds/%s
+  name: provider-kafka
+  version: v0.4.0
+  crd:
+    file: acl.kafka.crossplane.io_accesscontrollists.yaml
+    version: v1alpha1
+patchExternalName: false
+patchName: false
+compositions:
+  - name: topicacl
+    provider: sop
+    default: true
