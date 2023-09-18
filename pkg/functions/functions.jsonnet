@@ -394,4 +394,9 @@
       }
     }
   ),
+  GenExternalNamePatch():: (
+    [
+      genPatch('FromCompositeFieldPath', 'metadata.annotations[crossplane.io/external-name]', 'metadata.annotations[crossplane.io/external-name]', 'fromFieldPath', 'toFieldPath', 'Optional')
+    ]
+  )
 }

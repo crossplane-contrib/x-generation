@@ -117,6 +117,10 @@ local definitionStatus = k8s.GenerateSchema(
         }] else [])
         +[
         {
+          name: 'External-Name',
+          patches: k8s.GenExternalNamePatch()
+        },
+        {
           name: 'Common',
           patches: k8s.GenLabelsPatch(s.globalLabels)
         },
