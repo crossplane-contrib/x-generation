@@ -684,7 +684,7 @@ func main() {
 			OverrideFieldsInClaim: []overrideFieldInClaim{},
 		}).LoadConfig(m)
 		if g.Ignore {
-			fmt.Printf("Generator for %s asks to be ignored, skipping...", g.Name)
+			fmt.Printf("Generator for %s asks to be ignored, skipping...\n", g.Name)
 			continue
 		}
 		if err := g.LoadCRD(generatorConfig); err != nil {
