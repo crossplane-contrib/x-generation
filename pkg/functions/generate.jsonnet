@@ -95,7 +95,7 @@ local definitionStatus = k8s.GenerateSchema(
     apiVersion: 'apiextensions.crossplane.io/v1',
     kind: 'Composition',
     metadata: {
-      name: "composite" + composition.name + "." + s.config.group,
+      name: composition.name,
       labels: k8s.GenerateLabels(s.compositionIdentifier,composition.provider),
     },
     spec: {
