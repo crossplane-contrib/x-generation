@@ -100,7 +100,7 @@
   GetDefaultComposition(compositions):: (
     if std.length(compositions) > 0 then
       local default = [c.name for c in compositions if 'default' in c && c.default];
-      assert std.length(default) == 1 : 'Could not find a default composition. One composition must have default: true!';
+      assert std.length(default) == 1 : 'Could not find a default composition. Exactly one composition must have default: true!';
       default[0]
   ),
   GetVersion(crd, version):: (
