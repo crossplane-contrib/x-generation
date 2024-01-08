@@ -16,6 +16,6 @@ overrideFields:
     value: true
     ignore: true
 compositions:
-  - name: key
+  - name: compositekey.kms.aws.example.cloud
     provider: example
     default: true

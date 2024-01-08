@@ -11,6 +11,6 @@ provider:
 patchExternalName: false
 patchName: false
 compositions:
-  - name: topicacl
+  - name: compositetopicacl.kafka.aws.example.cloud
     provider: sop
     default: true

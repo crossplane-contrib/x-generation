@@ -9,7 +9,7 @@ provider:
     version: v1alpha1
 ignore: false
 compositions:
-  - name: instanceprofile
+  - name: compositeinstanceprofile.iam.aws.example.cloud
     provider: example
     default: true
 labels:

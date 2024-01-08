@@ -14,6 +14,6 @@ overrideFields:
     value: true
     ignore: true
 compositions:
-  - name: segmentgroup
+  - name: compositesegmentgroup.zpa.example.cloud
     provider: sop
     default: true

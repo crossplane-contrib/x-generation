@@ -9,6 +9,6 @@ provider:
     version: v1beta1
 ignore: false
 compositions:
-  - name: bucket
+  - name: compositebucket.s3.aws.example.cloud
     provider: example
     default: true

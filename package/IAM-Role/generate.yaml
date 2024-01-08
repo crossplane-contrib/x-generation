@@ -9,6 +9,6 @@ provider:
     version: v1beta1
 ignore: false
 compositions:
-  - name: role
+  - name: compositerole.iam.aws.example.cloud
     provider: example
     default: true

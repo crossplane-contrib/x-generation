@@ -8,6 +8,6 @@ provider:
     version: v1alpha3
 ignore: false
 compositions:
-  - name: bucketpolicy
+  - name: compositebucketpolicy.s3.aws.example.cloud
     provider: example
     default: true
