@@ -98,9 +98,10 @@
     ]
   ),
   GetDefaultComposition(compositions):: (
-    local default = [c.name for c in compositions if 'default' in c && c.default];
-    assert std.length(default) == 1 : 'Could not find a default composition. One composition must have default: true!';
-    default[0]
+    if std.length(compositions) > 0 then
+      local default = [c.name for c in compositions if 'default' in c && c.default];
+      assert std.length(default) == 1 : 'Could not find a default composition. One composition must have default: true!';
+      default[0]
   ),
   GetVersion(crd, version):: (
     local fv = [v for v in crd.spec.versions if 'name' in v && v.name == version];
