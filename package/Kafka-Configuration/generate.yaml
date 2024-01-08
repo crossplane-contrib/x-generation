@@ -7,7 +7,7 @@ provider:
     version: v1alpha1
 ignore: false
 compositions:
-  - name: configuration
+  - name: compositeconfiguration.kafka.aws.example.cloud
     provider: sop
     default: true
 readinessChecks: false

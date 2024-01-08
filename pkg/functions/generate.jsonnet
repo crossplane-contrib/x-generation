@@ -49,6 +49,9 @@ local definitionStatus = k8s.GenerateSchema(
       },
       [if std.objectHas(s.config, "connectionSecretKeys") then "connectionSecretKeys"]:
         s.config.connectionSecretKeys,
+      defaultCompositionRef: {
+        name: k8s.GetDefaultComposition(s.config.compositions),
+      },
       group: s.config.group,
       names: {
         kind: "Composite"+s.config.name,
@@ -85,9 +88,6 @@ local definitionStatus = k8s.GenerateSchema(
           additionalPrinterColumns: k8s.FilterPrinterColumns(version.additionalPrinterColumns),
         },
       ],
-      // defaultCompositionRef: {
-      //   name: k8s.GetDefaultComposition(s.config.compositions),
-      // },
     },
   },
 } + {
@@ -95,7 +95,7 @@ local definitionStatus = k8s.GenerateSchema(
     apiVersion: 'apiextensions.crossplane.io/v1',
     kind: 'Composition',
     metadata: {
-      name: "composite" + composition.name + "." + s.config.group,
+      name: composition.name,
       labels: k8s.GenerateLabels(s.compositionIdentifier,composition.provider),
     },
     spec: {
@@ -113,7 +113,7 @@ local definitionStatus = k8s.GenerateSchema(
             fromFieldPath: 'metadata.labels[crossplane.io/claim-name]',
             toFieldPath: if std.objectHas(s.config, 'patchExternalName') && s.config.patchExternalName == false then 'metadata.name' else 'metadata.annotations[crossplane.io/external-name]',
           }],
-        
+
         }] else [])
         +[
         {
@@ -186,7 +186,7 @@ local definitionStatus = k8s.GenerateSchema(
               'toFieldPath',
               'Optional'
           )+
-          (if std.objectHas(s.config, "connectionSecretKeys") then           
+          (if std.objectHas(s.config, "connectionSecretKeys") then
             k8s.GenSecretPatch(
                 'FromCompositeFieldPath',
                 'metadata.uid',

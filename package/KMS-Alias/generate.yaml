@@ -10,6 +10,6 @@ provider:
 ignore: false
 patchExternalName: false
 compositions:
-  - name: alias
+  - name: compositealias.kms.aws.example.cloud
     provider: example
     default: true

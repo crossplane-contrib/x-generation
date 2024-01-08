@@ -12,7 +12,7 @@ ignore: false
 # external-name is full-arn
 patchExternalName: false
 compositions:
-  - name: policy
+  - name: compositepolicy.iam.aws.example.cloud
     provider: example
     default: true
 
