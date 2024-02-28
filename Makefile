@@ -42,6 +42,8 @@ CROSSPLANE_NAMESPACE = upbound-system
 # loading of this file
 NPROCS ?= 1
 
+GO_REQUIRED_VERSION ?= 1.21
+
 # each of our test suites starts a kube-apiserver and running many test suites in
 # parallel can lead to high CPU utilization. by default we reduce the parallelism
 # to half the number of CPU cores.
