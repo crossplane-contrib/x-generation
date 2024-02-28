@@ -43,6 +43,9 @@ CROSSPLANE_NAMESPACE = upbound-system
 NPROCS ?= 1
 
 GO_REQUIRED_VERSION ?= 1.21
+# GOLANGCILINT_VERSION is inherited from build submodule by default.
+# Uncomment below if you need to override the version.
+GOLANGCILINT_VERSION ?= 1.56.2
 
 # each of our test suites starts a kube-apiserver and running many test suites in
 # parallel can lead to high CPU utilization. by default we reduce the parallelism
