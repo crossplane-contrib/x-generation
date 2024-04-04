@@ -349,7 +349,7 @@
         key: tag,
         value: commonTags[tag],
       } for tag in std.objectFields(commonTags) ],
-      [if tagType == "tagKeyValueArray" then tagProp]: [{
+      [if tagType == "tagKeyTagValueArray" then tagProp]: [{
         tagKey: tag
       } for tag in tags ]
       +
@@ -357,7 +357,7 @@
         tagKey: tag,
         tagValue: commonTags[tag],
       } for tag in std.objectFields(commonTags) ],
-      [if tagType == "stringObject" && std.length(commonTags) > 0 then "tags"]: {
+      [if tagType == "tagObject" && std.length(commonTags) > 0 then "tags"]: {
         [tag]: commonTags[tag],
       for tag in std.objectFields(commonTags) }
     };
@@ -375,10 +375,10 @@
       patches: if  tagType == "keyValueArray" then [
         genPatch('FromCompositeFieldPath', "metadata.labels["+tags[f]+"]", "spec.forProvider."+tagProp+"["+f+"].value", 'fromFieldPath', 'toFieldPath', "Required")
         for f in std.range(0, std.length(tags)-1)
-      ] else if  tagType == "tagKeyValueArray" then [
+      ] else if  tagType == "tagKeyTagValueArray" then [
         genPatch('FromCompositeFieldPath', "metadata.labels["+tags[f]+"]", "spec.forProvider."+tagProp+"["+f+"].tagValue", 'fromFieldPath', 'toFieldPath', "Required")
         for f in std.range(0, std.length(tags)-1)
-      ] else if  tagType == "stringObject" then [
+      ] else if  tagType == "tagObject" then [
         genPatch('FromCompositeFieldPath', "metadata.labels["+tag+"]", "spec.forProvider."+tagProp+"["+tag+"]", 'fromFieldPath', 'toFieldPath', 'Optional')
         for tag in tags
       ]

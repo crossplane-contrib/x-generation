@@ -356,7 +356,7 @@ func Test_checkTagType(t *testing.T) {
 			want1: "tag",
 		},
 		{
-			name: "Should find tagKeyValueArray",
+			name: "Should find tagKeyTagValueArray",
 			args: args{
 				crd: extv1.CustomResourceDefinition{
 					Spec: extv1.CustomResourceDefinitionSpec{
@@ -399,11 +399,11 @@ func Test_checkTagType(t *testing.T) {
 				},
 				version: "v1alpha1",
 			},
-			want:  "tagKeyValueArray",
+			want:  "tagKeyTagValueArray",
 			want1: "tag",
 		},
 		{
-			name: "Should find stringObject",
+			name: "Should find tagObject",
 			args: args{
 				crd: extv1.CustomResourceDefinition{
 					Spec: extv1.CustomResourceDefinitionSpec{
@@ -438,7 +438,7 @@ func Test_checkTagType(t *testing.T) {
 				},
 				version: "v1alpha1",
 			},
-			want:  "stringObject",
+			want:  "tagObject",
 			want1: "tag",
 		},
 		{
@@ -1146,8 +1146,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				Provider:             tt.fields.Provider,
 				crdSource:            tt.fields.crdSource,
 				configPath:           tt.fields.configPath,
-				tagType:              tt.fields.tagType,
-				tagProperty:          tt.fields.tagProperty,
+				TagType:              tt.fields.tagType,
+				TagProperty:          tt.fields.tagProperty,
 			}
 			if err := g.CheckConfig(tt.args.generatorConfig); (err != nil) != tt.wantErr {
 				t.Errorf("Generator.CheckConfig() error = %v, wantErr %v", err, tt.wantErr)
@@ -2091,8 +2091,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				Provider:             tt.fields.Provider,
 				crdSource:            tt.fields.crdSource,
 				configPath:           tt.fields.configPath,
-				tagType:              tt.fields.tagType,
-				tagProperty:          tt.fields.tagProperty,
+				TagType:              tt.fields.tagType,
+				TagProperty:          tt.fields.tagProperty,
 			}
 			g.UpdateConfig(tt.args.generatorConfig)
 			marshaledWantTags, _ := json.Marshal(tt.want.Tags)
@@ -2144,11 +2144,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 			if tt.want.configPath != g.configPath {
 				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.configPath, tt.want.configPath)
 			}
-			if tt.want.tagType != g.tagType {
-				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.tagType, tt.want.tagType)
+			if tt.want.tagType != g.TagType {
+				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.TagType, tt.want.tagType)
 			}
-			if tt.want.tagProperty != g.tagProperty {
-				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.tagProperty, tt.want.tagProperty)
+			if tt.want.tagProperty != g.TagProperty {
+				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.TagProperty, tt.want.tagProperty)
 			}
 		})
 	}
@@ -2467,8 +2467,8 @@ func Test_tryProperties(t *testing.T) {
 				Version:     "testv1",
 				crdSource:   string(crdSource),
 				configPath:  tempDir,
-				tagType:     "",
-				tagProperty: "",
+				TagType:     "",
+				TagProperty: "",
 				Provider: ProviderConfig{
 					CRD: CrdConfig{
 						Version: "testv1",
@@ -2626,8 +2626,8 @@ func Test_noDefaultPatch(t *testing.T) {
 			Version:     "testv1",
 			crdSource:   string(crdSource),
 			configPath:  tempDir,
-			tagType:     "",
-			tagProperty: "",
+			TagType:     "",
+			TagProperty: "",
 			Provider: ProviderConfig{
 				CRD: CrdConfig{
 					Version: "testv1",

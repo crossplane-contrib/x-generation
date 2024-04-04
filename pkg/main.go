@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/crossplane-contrib/x-generation/pkg/generator"
+	t "github.com/crossplane-contrib/x-generation/pkg/types"
 	crossplanev1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
 	"github.com/ghodss/yaml"
 	"github.com/google/go-cmp/cmp"
@@ -33,118 +35,44 @@ const (
 
 var globalLabels []string = []string{"crossplane.io/claim-name", "crossplane.io/claim-namespace", "crossplane.io/composite", "external-name"}
 
-type OverrideField struct {
-	Path     string      `yaml:"path" json:"path"`
-	Value    interface{} `yaml:"value,omitempty" json:"value,omitempty"`
-	Override interface{} `yaml:"override,omitempty" json:"override,omitempty"`
-	Ignore   bool        `yaml:"ignore" json:"ignore"`
-}
-
-type Composition struct {
-	Name     string `yaml:"name" json:"name"`
-	Provider string `yaml:"provider" json:"provider"`
-	Default  bool   `yaml:"default" json:"default"`
-}
-
-type GeneratorConfig struct {
-	CompositionIdentifier string               `yaml:"compositionIdentifier" json:"compositionIdentifier"`
-	Provider              GlobalProviderConfig `yaml:"provider" json:"provider"`
-	Tags                  TagConfig            `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Labels                LabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
-}
-
-type TagConfig struct {
-	FromLabels []string          `yaml:"fromLabels,omitempty" json:"fromLabels,omitempty"`
-	Common     map[string]string `yaml:"common,omitempty" json:"common,omitempty"`
-}
-type LabelConfig struct {
-	FromCRD []string          `yaml:"fromCRD,omitempty" json:"fromCRD,omitempty"`
-	Common  map[string]string `yaml:"common,omitempty" json:"common,omitempty"`
-}
-
-type GlobalHandlingType string
-
 const (
-	replaceGlobal GlobalHandlingType = "replace"
-	appendGlobal  GlobalHandlingType = "append"
+	replaceGlobal t.GlobalHandlingType = "replace"
+	appendGlobal  t.GlobalHandlingType = "append"
 )
 
-type GlobalHandlingTags struct {
-	FromLabels GlobalHandlingType `yaml:"fromLabels,omitempty" json:"fromLabels,omitempty"`
-	Common     GlobalHandlingType `yaml:"common,omitempty" json:"common,omitempty"`
-}
-
-type GlobalHandlingLabels struct {
-	FromCRD GlobalHandlingType `yaml:"fromCRD,omitempty" json:"fromCRD,omitempty"`
-	Common  GlobalHandlingType `yaml:"common,omitempty" json:"common,omitempty"`
-}
-
-type LocalTagConfig struct {
-	TagConfig
-	GlobalHandling GlobalHandlingTags `yaml:"globalHandling,omitempty" json:"globalHandling,omitempty"`
-}
-type LocalLabelConfig struct {
-	LabelConfig
-	GlobalHandling GlobalHandlingLabels `yaml:"globalHandling,omitempty" json:"globalHandling,omitempty"`
-}
-
-type CrdConfig struct {
-	File    string `yaml:"file" json:"file"`
-	Version string `yaml:"version" json:"version"`
-}
-
-type GlobalProviderConfig struct {
-	Name    string  `yaml:"name" json:"name"`
-	Version string  `yaml:"version" json:"version"`
-	BaseURL *string `yaml:"baseURL,omitempty" json:"baseURL,omitempty"`
-}
-type ProviderConfig struct {
-	GlobalProviderConfig
-	CRD CrdConfig `yaml:"crd" json:"crd"`
-}
-
 type Generator struct {
-	Group                 string                 `yaml:"group" json:"group"`
-	Name                  string                 `yaml:"name" json:"name"`
-	Plural                *string                `yaml:"plural,omitempty" json:"plural,omitempty"`
-	Version               string                 `yaml:"version" json:"version"`
-	ScriptFileName        *string                `yaml:"scriptFile,omitempty"`
-	ConnectionSecretKeys  *[]string              `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
-	Ignore                bool                   `yaml:"ignore"`
-	PatchExternalName     *bool                  `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
-	PatchlName            *bool                  `yaml:"patchName,omitempty" json:"patchName,omitempty"`
-	UIDFieldPath          *string                `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
-	OverrideFields        []OverrideField        `yaml:"overrideFields" json:"overrideFields"`
-	Compositions          []Composition          `yaml:"compositions" json:"compositions"`
-	Tags                  LocalTagConfig         `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Labels                LocalLabelConfig       `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Provider              ProviderConfig         `yaml:"provider" json:"provider"`
-	ReadinessChecks       *bool                  `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
-	OverrideFieldsInClaim []overrideFieldInClaim `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
+	Group                   string                   `yaml:"group" json:"group"`
+	Name                    string                   `yaml:"name" json:"name"`
+	Plural                  *string                  `yaml:"plural,omitempty" json:"plural,omitempty"`
+	Version                 string                   `yaml:"version" json:"version"`
+	ScriptFileName          *string                  `yaml:"scriptFile,omitempty"`
+	ConnectionSecretKeys    *[]string                `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
+	Ignore                  bool                     `yaml:"ignore"`
+	PatchExternalName       *bool                    `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
+	PatchlName              *bool                    `yaml:"patchName,omitempty" json:"patchName,omitempty"`
+	UIDFieldPath            *string                  `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
+	OverrideFields          []t.OverrideField        `yaml:"overrideFields" json:"overrideFields"`
+	Compositions            []t.Composition          `yaml:"compositions" json:"compositions"`
+	Tags                    t.LocalTagConfig         `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Labels                  t.LocalLabelConfig       `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Provider                t.ProviderConfig         `yaml:"provider" json:"provider"`
+	ReadinessChecks         *bool                    `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
+	OverrideFieldsInClaim   []t.OverrideFieldInClaim `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
+	ExpandCompositionName   *bool                    `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
+	AdditionalPipelineSteps []t.PipelineStep         `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
+	TagType                 *string                  `yaml:"tagType,omitempty" json:"tagType,omitempty"`
+	TagProperty             *string                  `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
 
-	crdSource   string
-	configPath  string
-	tagType     string
-	tagProperty string
-}
-
-type overrideFieldInClaim struct {
-	ClaimPath        string            `yaml:"claimPath" json:"claimPath"`
-	ManagedPath      *string           `yaml:"managedPath,omitempty" json:"managedPath,omitempty"`
-	OverrideSettings *OverrideSettings `yaml:"overrideSettings,omitempty" json:"overrideSettings,omitempty"`
-	Description      *string           `yaml:"description,omitempty" json:"description,omitempty"`
-}
-
-type OverrideSettings struct {
-	Property *interface{}         `yaml:"property,omitempty" json:"property,omitempty"`
-	Patches  []crossplanev1.Patch `yaml:"patches" json:"patches"`
+	crd        extv1.CustomResourceDefinition
+	crdSource  string
+	configPath string
 }
 
 type jsonnetOutput map[string]interface{}
 
 func (g *Generator) LoadConfig(path string) *Generator {
 	g.configPath = filepath.Dir(path)
-	y, err := ioutil.ReadFile(path)
+	y, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Error loading generator: %+v\n", err)
 	}
@@ -155,8 +83,8 @@ func (g *Generator) LoadConfig(path string) *Generator {
 	return g
 }
 
-func (g *Generator) LoadCRD(generatorConfig *GeneratorConfig) error {
-	crdTempDir, err := ioutil.TempDir("", "gencrd")
+func (g *Generator) LoadCRD(generatorConfig *t.GeneratorConfig) error {
+	crdTempDir, err := os.MkdirTemp("", "gencrd")
 	if err != nil {
 		return errors.Errorf("Error creating CRD temp dir: %v\n", err)
 	}
@@ -226,13 +154,20 @@ func (g *Generator) LoadCRD(generatorConfig *GeneratorConfig) error {
 	if version == "" {
 		version = g.Version
 	}
-	tagType, tagProperty := checkTagType(crd2, version)
+	if g.TagType == nil || g.TagProperty == nil {
+		tagType, tagProperty := checkTagType(crd2, version)
+		if g.TagType == nil {
+			g.TagType = &tagType
+		}
+		if g.TagProperty == nil {
+			g.TagProperty = &tagProperty
+		}
+	}
 	if err != nil {
 		return errors.Errorf("Convert CRD to JSON: %v\n", err)
 	}
 	g.crdSource = string(r)
-	g.tagType = tagType
-	g.tagProperty = tagProperty
+	g.crd = crd2
 	return nil
 
 }
@@ -241,7 +176,7 @@ func (g *Generator) LoadCRD(generatorConfig *GeneratorConfig) error {
 func checkTagType(crd extv1.CustomResourceDefinition, version string) (string, string) {
 	tags, tagProperty, err := tryToGetTags(crd, version)
 	if err != nil {
-		return "", ""
+		return "noTag", ""
 	}
 	if tags.Type == "array" {
 
@@ -257,17 +192,17 @@ func checkTagType(crd extv1.CustomResourceDefinition, version string) (string, s
 			_, ok3 := properties["tagKey"]
 			_, ok4 := properties["tagValue"]
 			if ok3 && ok4 {
-				return "tagKeyValueArray", tagProperty
+				return "tagKeyTagValueArray", tagProperty
 			}
 		}
 	}
 	if tags.Type == "object" {
 		if tags.AdditionalProperties.Schema.Type == "string" {
-			return "stringObject", tagProperty
+			return "tagObject", tagProperty
 		}
 	}
 
-	return "", ""
+	return "noTag", ""
 }
 
 // try to load the tags property of the crd from the given object
@@ -278,11 +213,11 @@ func tryToGetTags(crd extv1.CustomResourceDefinition, version string) (*extv1.JS
 				if specs, ok := schemaVersion.Schema.OpenAPIV3Schema.Properties["spec"]; ok {
 					if forProvider, ok := specs.Properties["forProvider"]; ok {
 						if tags, ok := forProvider.Properties["tags"]; ok {
-							return &tags, "tag", nil
+							return &tags, "spec.forProvider.tags", nil
 						}
 						if tagging, ok := forProvider.Properties["tagging"]; ok {
 							if tagSet, ok := tagging.Properties["tagSet"]; ok {
-								return &tagSet, "tagSet", nil
+								return &tagSet, "spec.forProvider.tagging.tagSet", nil
 							}
 						}
 					}
@@ -355,119 +290,222 @@ func getJsonStringFromMap(list *map[string]string) string {
 	return string(marshaledMap)
 }
 
-func (g *Generator) Exec(generatorConfig *GeneratorConfig, scriptPath, scriptFileOverride, outputPath string) {
-	var fl string
-	if scriptFileOverride != "" {
-		fl = filepath.Join(scriptPath, scriptFileOverride)
-	} else {
-		fl = filepath.Join(scriptPath, "generate.jsonnet")
-		if g.ScriptFileName != nil {
-			fl = filepath.Join(scriptPath, *g.ScriptFileName)
-		}
-	}
-
-	vm := jsonnet.MakeVM()
-
-	j, err := json.Marshal(&g)
-	// a := string(j)
-	// if a != "" {
-	// }
-	if err != nil {
-		fmt.Printf("Error creating jsonnet input: %s", err)
-	}
-	readinessChecks := "true"
-	if g.ReadinessChecks != nil {
-		if !*g.ReadinessChecks {
-			readinessChecks = "false"
-		}
-	}
-	vm.ExtVar("config", string(j))
-	vm.ExtVar("crd", g.crdSource)
-	vm.ExtVar("globalLabels", getJsonStringFromList(&globalLabels))
-
-	vm.ExtVar("tagList", getTagListAsString(g))
-
-	vm.ExtVar("commonTags", getCommonTagsAsString(g))
-	vm.ExtVar("labelList", getLabelListAsString(g))
-	vm.ExtVar("commonLabels", getCommonLabelsString(g))
-
-	vm.ExtVar("tagType", g.tagType)
-	vm.ExtVar("tagProperty", g.tagProperty)
-	vm.ExtVar("compositionIdentifier", generatorConfig.CompositionIdentifier)
-	vm.ExtVar("readinessChecks", readinessChecks)
-
-	r, err := vm.EvaluateFile(fl)
-	if err != nil {
-		fmt.Printf("Error applying function %s: %s", fl, err)
-	}
-
-	jso := make(jsonnetOutput)
-
-	err = json.Unmarshal([]byte(r), &jso)
-	if err != nil {
-		fmt.Printf("Error decoding jsonnet output: %s", err)
-	}
-
+func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptFileOverride, outputPath string) {
 	outPath := g.configPath
 	if outputPath != "" {
 		outPath = outputPath
 	}
-
 	header := []byte(fmt.Sprintf(autogenHeader,
 		time.Now().Format("15:04:05 on 01-02-2006"),
 	))
+	if generatorConfig.UsePipeline == nil || !*generatorConfig.UsePipeline {
+		var fl string
+		if scriptFileOverride != "" {
+			fl = filepath.Join(scriptPath, scriptFileOverride)
+		} else {
+			fl = filepath.Join(scriptPath, "generate.jsonnet")
+			if g.ScriptFileName != nil {
+				fl = filepath.Join(scriptPath, *g.ScriptFileName)
+			}
+		}
 
-	for fn, fc := range jso {
-		yo, err := yaml.Marshal(fc)
+		vm := jsonnet.MakeVM()
 
-		// Override x-kubernetes-validations fields if OverrideFieldsInClaim is given
-		if g.OverrideFieldsInClaim != nil && fn == "definition" {
-			var xrd crossplanev1.CompositeResourceDefinition
-			err := yaml.Unmarshal(yo, &xrd)
-			if err != nil {
-				fmt.Printf("Error unmarshalling xrd %v", err)
+		if g.ExpandCompositionName == nil {
+			if generatorConfig.ExpandCompositionName != nil {
+				g.ExpandCompositionName = generatorConfig.ExpandCompositionName
 			} else {
-				updated, err := g.updateKubernetesValidation(&xrd)
+				f := false
+				g.ExpandCompositionName = &f
+			}
+		}
+
+		j, err := json.Marshal(&g)
+		// a := string(j)
+		// if a != "" {
+		// }
+		if err != nil {
+			fmt.Printf("Error creating jsonnet input: %s", err)
+		}
+		readinessChecks := "true"
+		if g.ReadinessChecks != nil {
+			if !*g.ReadinessChecks {
+				readinessChecks = "false"
+			}
+		}
+		vm.ExtVar("config", string(j))
+		vm.ExtVar("crd", g.crdSource)
+		vm.ExtVar("globalLabels", getJsonStringFromList(&globalLabels))
+
+		vm.ExtVar("tagList", getTagListAsString(g))
+
+		vm.ExtVar("commonTags", getCommonTagsAsString(g))
+		vm.ExtVar("labelList", getLabelListAsString(g))
+		vm.ExtVar("commonLabels", getCommonLabelsString(g))
+
+		vm.ExtVar("tagType", *g.TagType)
+		tagPropertyPath := strings.Split(*g.TagProperty, ".")
+		tagProperty := tagPropertyPath[len(tagPropertyPath)-1]
+		vm.ExtVar("tagProperty", tagProperty)
+		vm.ExtVar("compositionIdentifier", generatorConfig.CompositionIdentifier)
+		vm.ExtVar("readinessChecks", readinessChecks)
+
+		r, err := vm.EvaluateFile(fl)
+		if err != nil {
+			fmt.Printf("Error applying function %s: %s", fl, err)
+		}
+
+		jso := make(jsonnetOutput)
+
+		err = json.Unmarshal([]byte(r), &jso)
+		if err != nil {
+			fmt.Printf("Error decoding jsonnet output: %s", err)
+		}
+
+		// header := []byte{}
+
+		for fn, fc := range jso {
+			yo, err := yaml.Marshal(fc)
+
+			// Override x-kubernetes-validations fields if OverrideFieldsInClaim is given
+			if g.OverrideFieldsInClaim != nil && fn == "definition" {
+				var xrd crossplanev1.CompositeResourceDefinition
+				err := yaml.Unmarshal(yo, &xrd)
 				if err != nil {
-					fmt.Printf("Error updating x-kubernetes-validations: %v", err)
-				}
-				if updated {
-					yo, err = yaml.Marshal(xrd)
+					fmt.Printf("Error unmarshalling xrd %v", err)
+				} else {
+					updated, err := g.updateKubernetesValidation(&xrd)
 					if err != nil {
-						fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+						fmt.Printf("Error updating x-kubernetes-validations: %v", err)
 					}
-					err = yaml.Unmarshal(yo, &fc)
-					if err != nil {
-						fmt.Printf("Error unmarshalling object %v", err)
+					if updated {
+						yo, err = yaml.Marshal(xrd)
+						if err != nil {
+							fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+						}
+						err = yaml.Unmarshal(yo, &fc)
+						if err != nil {
+							fmt.Printf("Error unmarshalling object %v", err)
+						}
 					}
 				}
 			}
-		}
-		if err != nil {
-			fmt.Printf("Error converting %s to YAML: %v", fn, err)
-		}
-		fp := filepath.Join(outPath, fn) + ".yaml"
-
-		// Check if file already exists
-		if _, err := os.Stat(fp); err == nil {
-			yi, err := ioutil.ReadFile(fp)
 			if err != nil {
-				fmt.Printf("Error reading from existing output file: %v", err)
+				fmt.Printf("Error converting %s to YAML: %v", fn, err)
 			}
-			ec := map[string]interface{}{}
-			if err := yaml.Unmarshal(yi, &ec); err != nil {
-				fmt.Printf("Error unmarshaling existing output file: %v", err)
+			fp := filepath.Join(outPath, fn) + ".yaml"
+
+			// Check if file already exists
+			if _, err := os.Stat(fp); err == nil {
+				yi, err := ioutil.ReadFile(fp)
+				if err != nil {
+					fmt.Printf("Error reading from existing output file: %v", err)
+				}
+				ec := map[string]interface{}{}
+				if err := yaml.Unmarshal(yi, &ec); err != nil {
+					fmt.Printf("Error unmarshaling existing output file: %v", err)
+				}
+
+				if cmp.Equal(fc, ec) {
+					continue
+				}
 			}
 
-			if cmp.Equal(fc, ec) {
-				continue
+			fc := append(header, yo...)
+			err = os.WriteFile(fp, fc, 0644)
+			if err != nil {
+				fmt.Printf("Error writing Generated File %s: %v", fp, err)
 			}
 		}
-
-		fc := append(header, yo...)
-		err = ioutil.WriteFile(fp, fc, 0644)
+	} else {
+		g2 := generator.XGenerator{
+			Group:                 g.Group,
+			Name:                  g.Name,
+			Plural:                g.Plural,
+			PatchExternalName:     g.PatchExternalName,
+			PatchlName:            g.PatchlName,
+			ConnectionSecretKeys:  g.ConnectionSecretKeys,
+			Compositions:          g.Compositions,
+			Version:               g.Version,
+			Crd:                   g.crd,
+			Provider:              g.Provider,
+			OverrideFields:        g.OverrideFields,
+			Labels:                g.Labels,
+			GlobalLabels:          globalLabels,
+			GeneratorConfig:       *generatorConfig,
+			ReadinessChecks:       g.ReadinessChecks,
+			UIDFieldPath:          g.UIDFieldPath,
+			ExpandCompositionName: generatorConfig.ExpandCompositionName,
+			TagType:               g.TagType,
+			TagProperty:           g.TagProperty,
+			AutoReadyFunction:     generatorConfig.AutoReadyFunction,
+			OverrideFieldsInClaim: g.OverrideFieldsInClaim,
+		}
+		if g.AdditionalPipelineSteps != nil {
+			g2.AdditionalPipelineSteps = g.AdditionalPipelineSteps
+		} else {
+			g2.AdditionalPipelineSteps = generatorConfig.AdditionalPipelineSteps
+		}
+		filename := filepath.Join(outPath, "definition") + ".yaml"
+		xrd, err := g2.GenerateXRD()
 		if err != nil {
-			fmt.Printf("Error writing Generated File %s: %v", fp, err)
+			log.Fatalf("Error creating xrd: %v", err)
+		}
+		xrd2 := map[string]interface{}{
+			"apiVersion": xrd.APIVersion,
+			"kind":       xrd.Kind,
+			"metadata": map[string]interface{}{
+				"name": xrd.ObjectMeta.Name,
+			},
+			"spec": xrd.Spec,
+		}
+		if len(xrd.ObjectMeta.Labels) > 0 {
+			xrd2["metadata"].(map[string]interface{})["labels"] = xrd.ObjectMeta.Labels
+		}
+		if len(xrd.ObjectMeta.Annotations) > 0 {
+			xrd2["metadata"].(map[string]interface{})["annotations"] = xrd.ObjectMeta.Annotations
+		}
+		fileContent, err := yaml.Marshal(xrd2)
+		if err != nil {
+			fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+		}
+		content := append(header, fileContent...)
+		err = os.WriteFile(filename, content, 0644)
+		if err != nil {
+			fmt.Printf("Error writing Generated File %s: %v", filename, err)
+		}
+		// filename = filepath.Join(outPath, "commposition") + ".yaml"
+		compositions, err := g2.GenerateComposition()
+		if err != nil {
+			log.Fatalf("Error creating composition: %v", err)
+		}
+		for _, p := range compositions {
+
+			filename = filepath.Join(outPath, "composition-"+p.Name) + ".yaml"
+			compositionContent := map[string]interface{}{
+				"apiVersion": p.Composition.APIVersion,
+				"kind":       p.Composition.Kind,
+				"metadata": map[string]interface{}{
+					"name":   p.Composition.ObjectMeta.Name,
+					"labels": p.Composition.ObjectMeta.Labels,
+				},
+				"spec": p.Composition.Spec,
+			}
+			if len(p.Composition.ObjectMeta.Labels) > 0 {
+				compositionContent["metadata"].(map[string]interface{})["labels"] = p.Composition.ObjectMeta.Labels
+			}
+			if len(p.Composition.ObjectMeta.Annotations) > 0 {
+				compositionContent["metadata"].(map[string]interface{})["annotations"] = p.Composition.ObjectMeta.Annotations
+			}
+			fileContent, err = yaml.Marshal(compositionContent)
+			if err != nil {
+				fmt.Printf("Error updating definition with new x-kubernetes-validations: %v", err)
+			}
+			content := append(header, fileContent...)
+			err = os.WriteFile(filename, content, 0644)
+			if err != nil {
+				fmt.Printf("Error writing Generated File %s: %v", filename, err)
+			}
 		}
 	}
 }
@@ -495,6 +533,7 @@ func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResour
 		return false, nil
 	}
 	replaceMap := map[string]string{}
+	replaceMessageMap := map[string]string{}
 
 	for _, override := range g.OverrideFieldsInClaim {
 		if override.ManagedPath != nil {
@@ -502,17 +541,23 @@ func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResour
 			updatedClaimPath := strings.Replace(override.ClaimPath, "spec", "self", 1)
 			updatedManagedPath := strings.Replace(*override.ManagedPath, "spec", "self", 1)
 			replaceMap[updatedManagedPath] = updatedClaimPath
+			replaceMessageMap[*override.ManagedPath] = override.ClaimPath
 		}
 	}
 	validationMapArray := []map[string]interface{}{}
 	for _, validation := range kubernetesValidations {
 		validationMap := validation.(map[string]interface{})
 		rule := validationMap["rule"].(string)
+		message := validationMap["message"].(string)
 		for old, new := range replaceMap {
 			rule = strings.Replace(rule, old, new, -1)
 		}
+		for old, new := range replaceMessageMap {
+			message = strings.Replace(message, old, new, -1)
+		}
 
 		validationMap["rule"] = rule
+		validationMap["message"] = message
 		validationMapArray = append(validationMapArray, validationMap)
 	}
 	spec["x-kubernetes-validations"] = validationMapArray
@@ -531,7 +576,7 @@ func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResour
 // Checks that the config for a generator is valid
 // The tags we patch from labels must exist in the configuration of the generator,
 // in the global configuration, or in the list of global labels
-func (g *Generator) CheckConfig(generatorConfig *GeneratorConfig) error {
+func (g *Generator) CheckConfig(generatorConfig *t.GeneratorConfig) error {
 	commonLables := generatorConfig.Labels.Common
 	listOfErrFields := []string{}
 
@@ -546,7 +591,7 @@ func (g *Generator) CheckConfig(generatorConfig *GeneratorConfig) error {
 	return nil
 }
 
-func (g *Generator) UpdateConfig(generatorConfig *GeneratorConfig) {
+func (g *Generator) UpdateConfig(generatorConfig *t.GeneratorConfig) {
 	if generatorConfig != nil {
 		if g.Labels.GlobalHandling.FromCRD == appendGlobal {
 			g.Labels.FromCRD = *appendLists(&generatorConfig.Labels.FromCRD, &g.Labels.FromCRD)
@@ -597,8 +642,8 @@ func parseArgs(configFile, generatorFile, inputPath, scriptFile, scriptPath, out
 }
 
 // Load the GeneratorConfig from the given path
-func loadGeneratorConfig(path string) (*GeneratorConfig, error) {
-	var generatorConfig GeneratorConfig
+func loadGeneratorConfig(path string) (*t.GeneratorConfig, error) {
+	var generatorConfig t.GeneratorConfig
 	y, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -624,7 +669,7 @@ func listHas(list *[]string, value string) bool {
 // Checks that the global configurator config is valid
 // The tags we patch from labels must exist in the global configuration,
 // or in the list of global labels
-func checkConfig(generatorConfig *GeneratorConfig) error {
+func checkConfig(generatorConfig *t.GeneratorConfig) error {
 	if generatorConfig != nil {
 		listOfErrFields := []string{}
 
@@ -679,9 +724,9 @@ func main() {
 
 	for _, m := range list {
 		g := (&Generator{
-			OverrideFields:        []OverrideField{},
-			Compositions:          []Composition{},
-			OverrideFieldsInClaim: []overrideFieldInClaim{},
+			OverrideFields:        []t.OverrideField{},
+			Compositions:          []t.Composition{},
+			OverrideFieldsInClaim: []t.OverrideFieldInClaim{},
 		}).LoadConfig(m)
 		if g.Ignore {
 			fmt.Printf("Generator for %s asks to be ignored, skipping...\n", g.Name)

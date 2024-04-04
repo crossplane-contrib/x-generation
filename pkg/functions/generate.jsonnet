@@ -35,6 +35,10 @@ local definitionStatus = k8s.GenerateSchema(
   ['status'],
 );
 
+local CompositionName(name) = (
+  if std.objectHas(s.config, "expandCompositionName") && s.config.expandCompositionName then "composite" + name + "." + s.config.group else name
+);
+
 {
   definition: {
     apiVersion: 'apiextensions.crossplane.io/v1',
@@ -50,7 +54,7 @@ local definitionStatus = k8s.GenerateSchema(
       [if std.objectHas(s.config, "connectionSecretKeys") then "connectionSecretKeys"]:
         s.config.connectionSecretKeys,
       defaultCompositionRef: {
-        name: k8s.GetDefaultComposition(s.config.compositions),
+        name: CompositionName(k8s.GetDefaultComposition(s.config.compositions)),
       },
       group: s.config.group,
       names: {
@@ -95,7 +99,7 @@ local definitionStatus = k8s.GenerateSchema(
     apiVersion: 'apiextensions.crossplane.io/v1',
     kind: 'Composition',
     metadata: {
-      name: composition.name,
+      name: CompositionName(composition.name),
       labels: k8s.GenerateLabels(s.compositionIdentifier,composition.provider),
     },
     spec: {
