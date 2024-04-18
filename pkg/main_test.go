@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	xtype "github.com/crossplane-contrib/x-generation/pkg/types"
 	cv1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/ghodss/yaml"
@@ -584,8 +585,8 @@ func Test_getTagListAsString(t *testing.T) {
 			name: "Should generate list",
 			args: args{
 				g: &Generator{
-					Tags: LocalTagConfig{
-						TagConfig: TagConfig{
+					Tags: xtype.LocalTagConfig{
+						TagConfig: xtype.TagConfig{
 							FromLabels: []string{
 								"tagA",
 								"tagB",
@@ -627,8 +628,8 @@ func Test_getCommonTagsAsString(t *testing.T) {
 			args: args{
 
 				g: &Generator{
-					Tags: LocalTagConfig{
-						TagConfig: TagConfig{
+					Tags: xtype.LocalTagConfig{
+						TagConfig: xtype.TagConfig{
 							Common: map[string]string{
 								"commonA": "valueA",
 								"commonB": "valueB",
@@ -669,8 +670,8 @@ func Test_getLabelListAsString(t *testing.T) {
 			name: "Should generate list",
 			args: args{
 				g: &Generator{
-					Labels: LocalLabelConfig{
-						LabelConfig: LabelConfig{
+					Labels: xtype.LocalLabelConfig{
+						LabelConfig: xtype.LabelConfig{
 							FromCRD: []string{
 								"labelA",
 								"labelB",
@@ -712,8 +713,8 @@ func Test_getCommonLabelsString(t *testing.T) {
 			args: args{
 
 				g: &Generator{
-					Labels: LocalLabelConfig{
-						LabelConfig: LabelConfig{
+					Labels: xtype.LocalLabelConfig{
+						LabelConfig: xtype.LabelConfig{
 							Common: map[string]string{
 								"commonA": "valueA",
 								"commonB": "valueB",
@@ -888,18 +889,18 @@ func TestGenerator_CheckConfig(t *testing.T) {
 		Ignore               bool
 		PatchExternalName    *bool
 		UIDFieldPath         *string
-		OverrideFields       []OverrideField
-		Compositions         []Composition
-		Tags                 LocalTagConfig
-		Labels               LocalLabelConfig
-		Provider             ProviderConfig
+		OverrideFields       []xtype.OverrideField
+		Compositions         []xtype.Composition
+		Tags                 xtype.LocalTagConfig
+		Labels               xtype.LocalLabelConfig
+		Provider             xtype.ProviderConfig
 		crdSource            string
 		configPath           string
 		tagType              string
 		tagProperty          string
 	}
 	type args struct {
-		generatorConfig *GeneratorConfig
+		generatorConfig *xtype.GeneratorConfig
 	}
 	tests := []struct {
 		name    string
@@ -910,8 +911,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 		{
 			name: "Should validate config in commonLables",
 			fields: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"commonA",
 							"commonB",
@@ -920,8 +921,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"commonA": "valueA",
 							"commonB": "valueB",
@@ -934,8 +935,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 		{
 			name: "Should validate config in fromCrd",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					LabelConfig: LabelConfig{
+				Labels: xtype.LocalLabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdA",
 							"fromCrdB",
@@ -943,8 +944,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 						},
 					},
 				},
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdA",
 							"fromCrdB",
@@ -953,15 +954,15 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{},
+				generatorConfig: &xtype.GeneratorConfig{},
 			},
 			wantErr: false,
 		},
 		{
 			name: "Should validate config in globalLabels",
 			fields: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"crossplane.io/claim-name",
 							"crossplane.io/claim-namespace",
@@ -972,15 +973,15 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{},
+				generatorConfig: &xtype.GeneratorConfig{},
 			},
 			wantErr: false,
 		},
 		{
 			name: "Should validate config in all places",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					LabelConfig: LabelConfig{
+				Labels: xtype.LocalLabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdA",
 							"fromCrdB",
@@ -988,8 +989,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 						},
 					},
 				},
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdA",
 							"fromCrdB",
@@ -1004,8 +1005,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"commonA": "valueA",
 							"commonB": "valueB",
@@ -1019,8 +1020,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 		{
 			name: "Should have errors from commonLables",
 			fields: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"commonA",
 							"commonX",
@@ -1029,8 +1030,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"commonA": "valueA",
 							"commonB": "valueB",
@@ -1043,8 +1044,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 		{
 			name: "Should have errors from fromCrd",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					LabelConfig: LabelConfig{
+				Labels: xtype.LocalLabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdA",
 							"fromCrdB",
@@ -1052,8 +1053,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 						},
 					},
 				},
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdA",
 							"fromCrdX",
@@ -1062,15 +1063,15 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{},
+				generatorConfig: &xtype.GeneratorConfig{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should have errors from globalLabels",
 			fields: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"crossplane.io/claim-name",
 							"crossplane.io/claim-namespace",
@@ -1081,15 +1082,15 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{},
+				generatorConfig: &xtype.GeneratorConfig{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "Should have errors from all",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					LabelConfig: LabelConfig{
+				Labels: xtype.LocalLabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdA",
 							"fromCrdB",
@@ -1097,8 +1098,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 						},
 					},
 				},
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdA",
 							"fromCrdX",
@@ -1114,8 +1115,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"commonA": "valueA",
 							"commonB": "valueB",
@@ -1146,8 +1147,8 @@ func TestGenerator_CheckConfig(t *testing.T) {
 				Provider:             tt.fields.Provider,
 				crdSource:            tt.fields.crdSource,
 				configPath:           tt.fields.configPath,
-				TagType:              tt.fields.tagType,
-				TagProperty:          tt.fields.tagProperty,
+				TagType:              &tt.fields.tagType,
+				TagProperty:          &tt.fields.tagProperty,
 			}
 			if err := g.CheckConfig(tt.args.generatorConfig); (err != nil) != tt.wantErr {
 				t.Errorf("Generator.CheckConfig() error = %v, wantErr %v", err, tt.wantErr)
@@ -1167,18 +1168,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		Ignore               bool
 		PatchExternalName    *bool
 		UIDFieldPath         *string
-		OverrideFields       []OverrideField
-		Compositions         []Composition
-		Tags                 LocalTagConfig
-		Labels               LocalLabelConfig
-		Provider             ProviderConfig
+		OverrideFields       []xtype.OverrideField
+		Compositions         []xtype.Composition
+		Tags                 xtype.LocalTagConfig
+		Labels               xtype.LocalLabelConfig
+		Provider             xtype.ProviderConfig
 		crdSource            string
 		configPath           string
 		tagType              string
 		tagProperty          string
 	}
 	type args struct {
-		generatorConfig *GeneratorConfig
+		generatorConfig *xtype.GeneratorConfig
 	}
 	tests := []struct {
 		name   string
@@ -1189,11 +1190,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should not append labels",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1203,8 +1204,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1214,11 +1215,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1231,11 +1232,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append labels",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1245,8 +1246,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1256,11 +1257,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1276,18 +1277,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should not append labels empty",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1297,11 +1298,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{},
 					},
 				},
@@ -1310,16 +1311,16 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append labels empty no GlobalHandling",
 			fields: fields{
-				Labels: LocalLabelConfig{
+				Labels: xtype.LocalLabelConfig{
 
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1329,9 +1330,9 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
+				Labels: xtype.LocalLabelConfig{
 
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1344,18 +1345,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append labels empty",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1365,11 +1366,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1382,11 +1383,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should not append common labels",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1396,8 +1397,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1407,11 +1408,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1424,11 +1425,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append common labels",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1438,8 +1439,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1449,11 +1450,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1469,18 +1470,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 			name: "Should not append common labels empty",
 
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1490,11 +1491,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: replaceGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{},
 					},
 				},
@@ -1503,15 +1504,15 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append labels empty no GlobalHandling",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					LabelConfig: LabelConfig{
+				Labels: xtype.LocalLabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1521,9 +1522,9 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
+				Labels: xtype.LocalLabelConfig{
 
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1536,18 +1537,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append common labels empty",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1557,11 +1558,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						Common: appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1574,11 +1575,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should not append tags",
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1588,8 +1589,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1600,11 +1601,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 			},
 			want: fields{
 
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1617,11 +1618,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append tags",
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1631,8 +1632,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1642,11 +1643,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1662,18 +1663,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should not append tags empty",
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1683,11 +1684,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{},
 					},
 				},
@@ -1696,15 +1697,15 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append tags empty no GlobalHandling",
 			fields: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1714,8 +1715,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1728,18 +1729,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append tags empty",
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1749,11 +1750,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -1766,11 +1767,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should not append common tags",
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1780,8 +1781,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1791,11 +1792,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1808,11 +1809,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append common tags",
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1822,8 +1823,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1833,11 +1834,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdLA": "valueLA",
 							"fromCrdLB": "valueLB",
@@ -1853,18 +1854,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 			name: "Should not append common tags empty",
 
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1874,11 +1875,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: replaceGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{},
 					},
 				},
@@ -1887,15 +1888,15 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append tags empty no GlobalHandling",
 			fields: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1905,8 +1906,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					TagConfig: TagConfig{
+				Tags: xtype.LocalTagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1919,18 +1920,18 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append common labels empty",
 			fields: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{},
 					},
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Tags: TagConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Tags: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1940,11 +1941,11 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						Common: appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						Common: map[string]string{
 							"fromCrdGA": "valueGA",
 							"fromCrdGB": "valueGB",
@@ -1957,12 +1958,12 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 		{
 			name: "Should append all",
 			fields: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: appendGlobal,
 						Common:  appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1975,12 +1976,12 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 						},
 					},
 				},
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: appendGlobal,
 						Common:     appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdLA",
 							"fromCrdLB",
@@ -1995,8 +1996,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -2008,7 +2009,7 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 							"fromCrdC":  "valueGC",
 						},
 					},
-					Tags: TagConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -2023,12 +2024,12 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				},
 			},
 			want: fields{
-				Labels: LocalLabelConfig{
-					GlobalHandling: GlobalHandlingLabels{
+				Labels: xtype.LocalLabelConfig{
+					GlobalHandling: xtype.GlobalHandlingLabels{
 						FromCRD: appendGlobal,
 						Common:  appendGlobal,
 					},
-					LabelConfig: LabelConfig{
+					LabelConfig: xtype.LabelConfig{
 						FromCRD: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -2046,12 +2047,12 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 						},
 					},
 				},
-				Tags: LocalTagConfig{
-					GlobalHandling: GlobalHandlingTags{
+				Tags: xtype.LocalTagConfig{
+					GlobalHandling: xtype.GlobalHandlingTags{
 						FromLabels: appendGlobal,
 						Common:     appendGlobal,
 					},
-					TagConfig: TagConfig{
+					TagConfig: xtype.TagConfig{
 						FromLabels: []string{
 							"fromCrdGA",
 							"fromCrdGB",
@@ -2091,8 +2092,8 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 				Provider:             tt.fields.Provider,
 				crdSource:            tt.fields.crdSource,
 				configPath:           tt.fields.configPath,
-				TagType:              tt.fields.tagType,
-				TagProperty:          tt.fields.tagProperty,
+				TagType:              &tt.fields.tagType,
+				TagProperty:          &tt.fields.tagProperty,
 			}
 			g.UpdateConfig(tt.args.generatorConfig)
 			marshaledWantTags, _ := json.Marshal(tt.want.Tags)
@@ -2144,10 +2145,10 @@ func TestGenerator_UpdateConfig(t *testing.T) {
 			if tt.want.configPath != g.configPath {
 				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.configPath, tt.want.configPath)
 			}
-			if tt.want.tagType != g.TagType {
+			if tt.want.tagType != *g.TagType {
 				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.TagType, tt.want.tagType)
 			}
-			if tt.want.tagProperty != g.TagProperty {
+			if tt.want.tagProperty != *g.TagProperty {
 				t.Errorf("TestGenerator_UpdateConfig() got = %v, want %v", g.TagProperty, tt.want.tagProperty)
 			}
 		})
@@ -2200,7 +2201,7 @@ func Test_listHas(t *testing.T) {
 
 func Test_checkConfig(t *testing.T) {
 	type args struct {
-		generatorConfig *GeneratorConfig
+		generatorConfig *xtype.GeneratorConfig
 	}
 	tests := []struct {
 		name    string
@@ -2210,15 +2211,15 @@ func Test_checkConfig(t *testing.T) {
 		{
 			name: "Should be valid common",
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"commonA": "valueCA",
 							"commonB": "valueCB",
 							"commonC": "valueCB",
 						},
 					},
-					Tags: TagConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"commonA",
 							"commonB",
@@ -2231,9 +2232,9 @@ func Test_checkConfig(t *testing.T) {
 		{
 			name: "Should be valid globalLabels",
 			args: args{
-				generatorConfig: &GeneratorConfig{
+				generatorConfig: &xtype.GeneratorConfig{
 
-					Tags: TagConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"crossplane.io/claim-name",
 							"crossplane.io/claim-namespace",
@@ -2248,15 +2249,15 @@ func Test_checkConfig(t *testing.T) {
 		{
 			name: "Should be not be valid",
 			args: args{
-				generatorConfig: &GeneratorConfig{
-					Labels: LabelConfig{
+				generatorConfig: &xtype.GeneratorConfig{
+					Labels: xtype.LabelConfig{
 						Common: map[string]string{
 							"commonA": "valueCA",
 							"commonB": "valueCB",
 							"commonC": "valueCB",
 						},
 					},
-					Tags: TagConfig{
+					Tags: xtype.TagConfig{
 						FromLabels: []string{
 							"commonA",
 							"commonX",
@@ -2467,20 +2468,20 @@ func Test_tryProperties(t *testing.T) {
 				Version:     "testv1",
 				crdSource:   string(crdSource),
 				configPath:  tempDir,
-				TagType:     "",
-				TagProperty: "",
-				Provider: ProviderConfig{
-					CRD: CrdConfig{
+				TagType:     nil,
+				TagProperty: nil,
+				Provider: xtype.ProviderConfig{
+					CRD: xtype.CrdConfig{
 						Version: "testv1",
 					},
 				},
 				Plural:                &plural,
-				Compositions:          []Composition{},
-				OverrideFields:        []OverrideField{},
-				OverrideFieldsInClaim: []overrideFieldInClaim{},
+				Compositions:          []xtype.Composition{},
+				OverrideFields:        []xtype.OverrideField{},
+				OverrideFieldsInClaim: []xtype.OverrideFieldInClaim{},
 			}
 
-			gConfig := GeneratorConfig{
+			gConfig := xtype.GeneratorConfig{
 				CompositionIdentifier: "example.cloud",
 			}
 
@@ -2626,26 +2627,26 @@ func Test_noDefaultPatch(t *testing.T) {
 			Version:     "testv1",
 			crdSource:   string(crdSource),
 			configPath:  tempDir,
-			TagType:     "",
-			TagProperty: "",
-			Provider: ProviderConfig{
-				CRD: CrdConfig{
+			TagType:     nil,
+			TagProperty: nil,
+			Provider: xtype.ProviderConfig{
+				CRD: xtype.CrdConfig{
 					Version: "testv1",
 				},
 			},
 			Plural: &plural,
-			Compositions: []Composition{
+			Compositions: []xtype.Composition{
 				{
 					Name:     "configuration",
 					Provider: "sop",
 					Default:  true,
 				},
 			},
-			OverrideFields:        []OverrideField{},
-			OverrideFieldsInClaim: []overrideFieldInClaim{},
+			OverrideFields:        []xtype.OverrideField{},
+			OverrideFieldsInClaim: []xtype.OverrideFieldInClaim{},
 		}
 
-		gConfig := GeneratorConfig{
+		gConfig := xtype.GeneratorConfig{
 			CompositionIdentifier: "example.cloud",
 		}
 

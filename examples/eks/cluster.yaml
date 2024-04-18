@@ -1,0 +1,14 @@
+apiVersion: eks.aws.example.cloud/v1beta1
+kind: CompositeCluster
+metadata:
+  name: test
+  annotations:
+    render.crossplane.io/composition-path: package/EKS-Cluster/composition-xcluster.eks.aws.example.cloud.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
+    render.crossplane.io/environment-path: examples/environmentconfig.yaml
+spec:
+  forProvider:
+    region: eu-central-1
+    roleArnSelector:
+      matchLabels:
+        testing.upbound.io/example-name: example-pia
