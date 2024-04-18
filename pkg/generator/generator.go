@@ -348,15 +348,21 @@ func (g *XGenerator) GenerateComposition() ([]NamedComposition, error) {
 		composition.Spec.Pipeline = append(composition.Spec.Pipeline, patchAndTransform)
 
 		if g.AdditionalPipelineSteps != nil {
+			startSteps := []c.PipelineStep{}
 			for _, s := range g.AdditionalPipelineSteps {
 				step, err := g.generateAdditonalPipelineStep(s)
 				if err != nil {
 					return nil, err
 				}
 				if step != nil {
-					composition.Spec.Pipeline = append(composition.Spec.Pipeline, *step)
+					if s.Before {
+						startSteps = append(startSteps, *step)
+					} else {
+						composition.Spec.Pipeline = append(composition.Spec.Pipeline, *step)
+					}
 				}
 			}
+			composition.Spec.Pipeline = append(startSteps, composition.Spec.Pipeline...)
 			if g.AutoReadyFunction == nil || g.AutoReadyFunction.Generate == nil || *g.AutoReadyFunction.Generate {
 				functionName := "function-auto-ready"
 				if g.AutoReadyFunction != nil && g.AutoReadyFunction.Name != nil {
@@ -781,9 +787,9 @@ func (g *XGenerator) generateAdditonalPipelineStep(s t.PipelineStep) (*c.Pipelin
 	}
 	if render {
 		return &c.PipelineStep{
-			Step: s.Name,
+			Step: s.Step,
 			FunctionRef: c.FunctionReference{
-				Name: s.Function,
+				Name: s.Function.Name,
 			},
 			Input: &runtime.RawExtension{
 				Raw: rawInput,

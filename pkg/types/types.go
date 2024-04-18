@@ -34,11 +34,16 @@ type AutoReadyFunction struct {
 	Name     *string `yaml:"name,omitempty" json:"name,omitempty"`
 }
 
+type PipelineFunction struct {
+	Name string `yaml:"name" json:"name"`
+}
+
 type PipelineStep struct {
-	Name      string                 `yaml:"name" json:"name"`
-	Function  string                 `yaml:"function" json:"function"`
+	Step      string                 `yaml:"step" json:"step"`
+	Function  PipelineFunction       `yaml:"function" json:"function"`
 	Condition *string                `yaml:"condition,omitempty" json:"condition,omitempty"`
 	Input     map[string]interface{} `yaml:"input" json:"input"`
+	Before    bool                   `yaml:"before" json:"before"`
 }
 
 type TagConfig struct {
