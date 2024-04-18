@@ -39,11 +39,11 @@ type PipelineFunction struct {
 }
 
 type PipelineStep struct {
-	Step      string                 `yaml:"step" json:"step"`
-	Function  PipelineFunction       `yaml:"function" json:"function"`
-	Condition *string                `yaml:"condition,omitempty" json:"condition,omitempty"`
-	Input     map[string]interface{} `yaml:"input" json:"input"`
-	Before    bool                   `yaml:"before" json:"before"`
+	Step        string                 `yaml:"step" json:"step"`
+	FunctionRef PipelineFunction       `yaml:"functionRef" json:"functionRef"`
+	Condition   *string                `yaml:"condition,omitempty" json:"condition,omitempty"`
+	Input       map[string]interface{} `yaml:"input" json:"input"`
+	Before      bool                   `yaml:"before" json:"before"`
 }
 
 type TagConfig struct {

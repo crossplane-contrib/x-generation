@@ -789,7 +789,7 @@ func (g *XGenerator) generateAdditonalPipelineStep(s t.PipelineStep) (*c.Pipelin
 		return &c.PipelineStep{
 			Step: s.Step,
 			FunctionRef: c.FunctionReference{
-				Name: s.Function.Name,
+				Name: s.FunctionRef.Name,
 			},
 			Input: &runtime.RawExtension{
 				Raw: rawInput,
