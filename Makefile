@@ -13,7 +13,7 @@ PLATFORMS ?= linux_amd64
 # ====================================================================================
 # Setup Kubernetes tools
 
-UP_VERSION = v0.14.0
+UP_VERSION = v0.28.0
 UP_CHANNEL = stable
 
 -include build/makelib/k8s_tools.mk

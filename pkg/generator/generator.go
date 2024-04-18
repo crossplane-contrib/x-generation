@@ -18,26 +18,27 @@ import (
 )
 
 type XGenerator struct {
-	Group                   string                      `yaml:"group" json:"group"`
-	Name                    string                      `yaml:"name" json:"name"`
-	Plural                  *string                     `yaml:"plural,omitempty" json:"plural,omitempty"`
-	PatchExternalName       *bool                       `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
-	PatchlName              *bool                       `yaml:"patchName,omitempty" json:"patchName,omitempty"`
-	ConnectionSecretKeys    *[]string                   `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
-	Compositions            []t.Composition             `yaml:"compositions" json:"compositions"`
-	Version                 string                      `yaml:"version" json:"version"`
-	Crd                     v1.CustomResourceDefinition `yaml:"crd" json:"crd"`
-	Provider                t.ProviderConfig            `yaml:"provider" json:"provider"`
-	OverrideFields          []t.OverrideField           `yaml:"overrideFields" json:"overrideFields"`
-	OverrideFieldsInClaim   []t.OverrideFieldInClaim    `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
-	Labels                  t.LocalLabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
-	ReadinessChecks         *bool                       `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
-	UIDFieldPath            *string                     `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
-	ExpandCompositionName   *bool                       `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
-	AdditionalPipelineSteps []t.PipelineStep            `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
-	TagType                 *string                     `yaml:"tagType,omitempty" json:"tagType,omitempty"`
-	TagProperty             *string                     `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
-	AutoReadyFunction       *t.AutoReadyFunction        `yaml:"autoReadyFunction,omitempty" json:"autoReadyFunction,omitempty"`
+	Group                     string                      `yaml:"group" json:"group"`
+	Name                      string                      `yaml:"name" json:"name"`
+	Plural                    *string                     `yaml:"plural,omitempty" json:"plural,omitempty"`
+	PatchExternalName         *bool                       `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
+	PatchlName                *bool                       `yaml:"patchName,omitempty" json:"patchName,omitempty"`
+	ConnectionSecretKeys      *[]string                   `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
+	Compositions              []t.Composition             `yaml:"compositions" json:"compositions"`
+	Version                   string                      `yaml:"version" json:"version"`
+	Crd                       v1.CustomResourceDefinition `yaml:"crd" json:"crd"`
+	Provider                  t.ProviderConfig            `yaml:"provider" json:"provider"`
+	OverrideFields            []t.OverrideField           `yaml:"overrideFields" json:"overrideFields"`
+	OverrideFieldsInClaim     []t.OverrideFieldInClaim    `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
+	Labels                    t.LocalLabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
+	ReadinessChecks           *bool                       `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
+	UIDFieldPath              *string                     `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
+	ExpandCompositionName     *bool                       `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
+	AdditionalPipelineSteps   []t.PipelineStep            `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
+	TagType                   *string                     `yaml:"tagType,omitempty" json:"tagType,omitempty"`
+	TagProperty               *string                     `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
+	AutoReadyFunction         *t.AutoReadyFunction        `yaml:"autoReadyFunction,omitempty" json:"autoReadyFunction,omitempty"`
+	PatchAndTransfromFunction *string                     `yaml:"patchAndTransfromFunction,omitempty" json:"patchAndTransfromFunction,omitempty"`
 
 	GlobalLabels             []string
 	GeneratorConfig          t.GeneratorConfig
@@ -46,15 +47,16 @@ type XGenerator struct {
 }
 
 type OverrideFieldDefinition struct {
-	ClaimPath    string
-	ManagedPath  string
-	Schema       *v1.JSONSchemaProps
-	Required     bool
-	Replacement  bool
-	PathSegments []string
-	Patches      []p.PatchSetPatch
-	OriginalEnum []v1.JSON
-	Overwrites   *t.OverrideFieldInClaim
+	ClaimPath     string
+	ManagedPath   string
+	Schema        *v1.JSONSchemaProps
+	Required      bool
+	Replacement   bool
+	PathSegments  []string
+	Patches       []p.PatchSetPatch
+	OriginalEnum  []v1.JSON
+	Overwrites    *t.OverrideFieldInClaim
+	IgnoreInClaim bool
 }
 
 type NamedComposition struct {
@@ -316,10 +318,14 @@ func (g *XGenerator) GenerateComposition() ([]NamedComposition, error) {
 		// 	resource,
 		// }
 
+		name = "function-patch-and-transform"
+		if g.PatchAndTransfromFunction != nil {
+			name = *g.PatchAndTransfromFunction
+		}
 		patchAndTransform := c.PipelineStep{
 			Step: "patch-and-transform",
 			FunctionRef: c.FunctionReference{
-				Name: "function-patch-and-transform",
+				Name: name,
 			},
 		}
 
@@ -452,8 +458,23 @@ func (g *XGenerator) generatePropertyPatchesFor(schema v1.JSONSchemaProps, path 
 	return patches
 }
 
+func (g *XGenerator) generatePropertyPatchesForIgnoredProperties(patchType p.PatchType) []p.PatchSetPatch {
+	patches := []p.PatchSetPatch{}
+	definitions := getOverwriteDefinitionForIgnoredFileds(g.overrideFieldDefinitions)
+	for _, d := range definitions {
+		definitionPatches := getPatchesFromDefinition(d, patchType)
+
+		if len(definitionPatches) > 0 {
+			patches = append(patches, definitionPatches...)
+		}
+	}
+	return patches
+}
 func (g *XGenerator) generateSortedPropertyPatchesFor(schema v1.JSONSchemaProps, path string, patchType p.PatchType) []p.PatchSetPatch {
 	patches := g.generatePropertyPatchesFor(schema, path, patchType)
+	if patchType == p.PatchTypeFromCompositeFieldPath {
+		patches = append(patches, g.generatePropertyPatchesForIgnoredProperties(patchType)...)
+	}
 	sort.Slice(patches, func(i, j int) bool {
 		return *patches[i].FromFieldPath < *patches[j].FromFieldPath
 	})
@@ -602,7 +623,7 @@ func (g *XGenerator) generateSchemaForObject(schema v1.JSONSchemaProps, path str
 			if propertySchema != nil {
 				result.Properties[key] = *propertySchema
 			}
-			if overwrite != nil {
+			if overwrite != nil && !overwrite.IgnoreInClaim {
 				if overwrite.Schema == nil {
 					overwrite.Schema = pointer(result.Properties[key])
 				}
@@ -670,6 +691,11 @@ func (g *XGenerator) getIgnored() []string {
 	for _, o := range g.OverrideFields {
 		if o.Ignore {
 			defaultIgnored = append(defaultIgnored, o.Path)
+		}
+	}
+	for _, o := range g.OverrideFieldsInClaim {
+		if o.Ignore {
+			defaultIgnored = append(defaultIgnored, o.ClaimPath)
 		}
 	}
 	return defaultIgnored
@@ -802,7 +828,7 @@ func (g *XGenerator) generateAdditonalPipelineStep(s t.PipelineStep) (*c.Pipelin
 
 func (g *XGenerator) overwrittenFields(schema *v1.JSONSchemaProps, path string) error {
 	for _, o := range g.overrideFieldDefinitions {
-		if o.PathSegments[0] == path {
+		if o.PathSegments[0] == path && !o.IgnoreInClaim {
 			err := overwrittenFields(schema, path, o, 1)
 			if err != nil {
 				return err
@@ -863,6 +889,16 @@ func getOverwriteDefinition(list []*OverrideFieldDefinition, path string, prop d
 	return nil
 }
 
+func getOverwriteDefinitionForIgnoredFileds(list []*OverrideFieldDefinition) []*OverrideFieldDefinition {
+	definitions := []*OverrideFieldDefinition{}
+	for _, d := range list {
+		if d.IgnoreInClaim {
+			definitions = append(definitions, d)
+		}
+	}
+	return definitions
+}
+
 func mapOverwrittenFields(fields []t.OverrideFieldInClaim) []*OverrideFieldDefinition {
 	overrideFieldDefinitions := []*OverrideFieldDefinition{}
 	for _, o := range fields {
@@ -873,13 +909,18 @@ func mapOverwrittenFields(fields []t.OverrideFieldInClaim) []*OverrideFieldDefin
 			PathSegments: splitPath(o.ClaimPath),
 			Overwrites:   &o,
 		}
+		if o.Ignore {
+			definition.IgnoreInClaim = true
+		}
 		if o.ManagedPath != nil {
 			definition.ManagedPath = *o.ManagedPath
 			definition.Replacement = true
 		} else {
 			definition.ManagedPath = o.ClaimPath
 			definition.Replacement = false
-			definition.Schema = o.OverrideSettings.Property
+			if o.OverrideSettings != nil {
+				definition.Schema = o.OverrideSettings.Property
+			}
 		}
 		overrideFieldDefinitions = append(overrideFieldDefinitions, definition)
 	}

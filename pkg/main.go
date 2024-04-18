@@ -419,27 +419,28 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 		}
 	} else {
 		g2 := generator.XGenerator{
-			Group:                 g.Group,
-			Name:                  g.Name,
-			Plural:                g.Plural,
-			PatchExternalName:     g.PatchExternalName,
-			PatchlName:            g.PatchlName,
-			ConnectionSecretKeys:  g.ConnectionSecretKeys,
-			Compositions:          g.Compositions,
-			Version:               g.Version,
-			Crd:                   g.crd,
-			Provider:              g.Provider,
-			OverrideFields:        g.OverrideFields,
-			Labels:                g.Labels,
-			GlobalLabels:          globalLabels,
-			GeneratorConfig:       *generatorConfig,
-			ReadinessChecks:       g.ReadinessChecks,
-			UIDFieldPath:          g.UIDFieldPath,
-			ExpandCompositionName: generatorConfig.ExpandCompositionName,
-			TagType:               g.TagType,
-			TagProperty:           g.TagProperty,
-			AutoReadyFunction:     generatorConfig.AutoReadyFunction,
-			OverrideFieldsInClaim: g.OverrideFieldsInClaim,
+			Group:                     g.Group,
+			Name:                      g.Name,
+			Plural:                    g.Plural,
+			PatchExternalName:         g.PatchExternalName,
+			PatchlName:                g.PatchlName,
+			ConnectionSecretKeys:      g.ConnectionSecretKeys,
+			Compositions:              g.Compositions,
+			Version:                   g.Version,
+			Crd:                       g.crd,
+			Provider:                  g.Provider,
+			OverrideFields:            g.OverrideFields,
+			Labels:                    g.Labels,
+			GlobalLabels:              globalLabels,
+			GeneratorConfig:           *generatorConfig,
+			ReadinessChecks:           g.ReadinessChecks,
+			UIDFieldPath:              g.UIDFieldPath,
+			ExpandCompositionName:     generatorConfig.ExpandCompositionName,
+			TagType:                   g.TagType,
+			TagProperty:               g.TagProperty,
+			AutoReadyFunction:         generatorConfig.AutoReadyFunction,
+			OverrideFieldsInClaim:     g.OverrideFieldsInClaim,
+			PatchAndTransfromFunction: generatorConfig.PatchAndTransfromFunction,
 		}
 		if g.AdditionalPipelineSteps != nil {
 			g2.AdditionalPipelineSteps = g.AdditionalPipelineSteps
@@ -450,6 +451,12 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 		xrd, err := g2.GenerateXRD()
 		if err != nil {
 			log.Fatalf("Error creating xrd: %v", err)
+		}
+		rawContent, err := json.Marshal(xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Object)
+		xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Raw = rawContent
+		_, err = g.updateKubernetesValidation(xrd)
+		if err != nil {
+			fmt.Printf("Error updating x-kubernetes-validations: %v", err)
 		}
 		xrd2 := map[string]interface{}{
 			"apiVersion": xrd.APIVersion,
@@ -534,6 +541,7 @@ func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResour
 	}
 	replaceMap := map[string]string{}
 	replaceMessageMap := map[string]string{}
+	ignoreList := []string{}
 
 	for _, override := range g.OverrideFieldsInClaim {
 		if override.ManagedPath != nil {
@@ -543,22 +551,34 @@ func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResour
 			replaceMap[updatedManagedPath] = updatedClaimPath
 			replaceMessageMap[*override.ManagedPath] = override.ClaimPath
 		}
+		if override.Ignore {
+			ignoreList = append(ignoreList, strings.Replace(override.ClaimPath, "spec", "self", 1))
+		}
 	}
 	validationMapArray := []map[string]interface{}{}
 	for _, validation := range kubernetesValidations {
 		validationMap := validation.(map[string]interface{})
 		rule := validationMap["rule"].(string)
-		message := validationMap["message"].(string)
-		for old, new := range replaceMap {
-			rule = strings.Replace(rule, old, new, -1)
+		ignore := false
+		for _, i := range ignoreList {
+			if strings.Contains(rule, i) {
+				ignore = true
+				break
+			}
 		}
-		for old, new := range replaceMessageMap {
-			message = strings.Replace(message, old, new, -1)
-		}
+		if !ignore {
+			message := validationMap["message"].(string)
+			for old, new := range replaceMap {
+				rule = strings.Replace(rule, old, new, -1)
+			}
+			for old, new := range replaceMessageMap {
+				message = strings.Replace(message, old, new, -1)
+			}
 
-		validationMap["rule"] = rule
-		validationMap["message"] = message
-		validationMapArray = append(validationMapArray, validationMap)
+			validationMap["rule"] = rule
+			validationMap["message"] = message
+			validationMapArray = append(validationMapArray, validationMap)
+		}
 	}
 	spec["x-kubernetes-validations"] = validationMapArray
 	properties["spec"] = spec

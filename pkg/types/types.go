@@ -19,14 +19,15 @@ type Composition struct {
 }
 
 type GeneratorConfig struct {
-	CompositionIdentifier   string               `yaml:"compositionIdentifier" json:"compositionIdentifier"`
-	Provider                GlobalProviderConfig `yaml:"provider" json:"provider"`
-	Tags                    TagConfig            `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Labels                  LabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
-	UsePipeline             *bool                `yaml:"usePipeline,omitempty" json:"usePipeline,omitempty"`
-	ExpandCompositionName   *bool                `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
-	AdditionalPipelineSteps []PipelineStep       `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
-	AutoReadyFunction       *AutoReadyFunction   `yaml:"autoReadyFunction,omitempty" json:"autoReadyFunction,omitempty"`
+	CompositionIdentifier     string               `yaml:"compositionIdentifier" json:"compositionIdentifier"`
+	Provider                  GlobalProviderConfig `yaml:"provider" json:"provider"`
+	Tags                      TagConfig            `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Labels                    LabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
+	UsePipeline               *bool                `yaml:"usePipeline,omitempty" json:"usePipeline,omitempty"`
+	PatchAndTransfromFunction *string              `yaml:"patchAndTransfromFunction,omitempty" json:"patchAndTransfromFunction,omitempty"`
+	ExpandCompositionName     *bool                `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
+	AdditionalPipelineSteps   []PipelineStep       `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
+	AutoReadyFunction         *AutoReadyFunction   `yaml:"autoReadyFunction,omitempty" json:"autoReadyFunction,omitempty"`
 }
 
 type AutoReadyFunction struct {
@@ -96,6 +97,7 @@ type OverrideFieldInClaim struct {
 	ManagedPath      *string           `yaml:"managedPath,omitempty" json:"managedPath,omitempty"`
 	OverrideSettings *OverrideSettings `yaml:"overrideSettings,omitempty" json:"overrideSettings,omitempty"`
 	Description      *string           `yaml:"description,omitempty" json:"description,omitempty"`
+	Ignore           bool              `yaml:"ignore,omitempty" json:"ignore,omitempty"`
 }
 
 type OverrideSettings struct {
