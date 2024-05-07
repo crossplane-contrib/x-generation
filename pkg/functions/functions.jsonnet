@@ -339,7 +339,7 @@
       defaultUIDFieldPath
   ),
   GenTagKeys(tagType, tagProperty, tags, commonTags):: (
-    local tagProp = if tagProperty == "tag" then "tags" else if tagProperty == "tagSet" then "tagSet";
+    local tagProp = if tagProperty == "tags" then "tags" else if tagProperty == "tagSet" then "tagSet";
     local generatedTags = {
       [if tagType == "keyValueArray" then tagProp]: [{
         key: tag
@@ -361,14 +361,14 @@
         [tag]: commonTags[tag],
       for tag in std.objectFields(commonTags) }
     };
-    if tagProperty == "tag" then generatedTags
+    if tagProperty == "tags" then generatedTags
     else if tagProperty == "tagSet" then {
       tagging: generatedTags
     }
     else {}
   ),
   GenTagsPatch(tagType, tags, tagProperty):: (
-  local tagProp = if tagProperty == "tag" then "tags" else if tagProperty == "tagSet" then "tagging.tagSet";
+  local tagProp = if tagProperty == "tags" then "tags" else if tagProperty == "tagSet" then "tagging.tagSet";
   if  tagType != "" then [
     {
       name: "Tags",

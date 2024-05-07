@@ -26,4 +26,4 @@ tags:
   common:
     commonTagA: comonTagAValue
     commonTagB: comonTagBValue
-usePipeline: true
+usePipeline: false
