@@ -342,10 +342,18 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 		vm.ExtVar("labelList", getLabelListAsString(g))
 		vm.ExtVar("commonLabels", getCommonLabelsString(g))
 
-		vm.ExtVar("tagType", *g.TagType)
-		tagPropertyPath := strings.Split(*g.TagProperty, ".")
-		tagProperty := tagPropertyPath[len(tagPropertyPath)-1]
-		vm.ExtVar("tagProperty", tagProperty)
+		if g.TagType != nil {
+			vm.ExtVar("tagType", *g.TagType)
+		} else {
+			vm.ExtVar("tagType", "")
+		}
+		if g.TagProperty != nil {
+			tagPropertyPath := strings.Split(*g.TagProperty, ".")
+			tagProperty := tagPropertyPath[len(tagPropertyPath)-1]
+			vm.ExtVar("tagProperty", tagProperty)
+		} else {
+			vm.ExtVar("tagProperty", "")
+		}
 		vm.ExtVar("compositionIdentifier", generatorConfig.CompositionIdentifier)
 		vm.ExtVar("readinessChecks", readinessChecks)
 
@@ -452,6 +460,9 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 			log.Fatalf("Error creating xrd: %v", err)
 		}
 		rawContent, err := json.Marshal(xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Object)
+		if err != nil {
+			fmt.Printf("Error marhalling object: %v", err)
+		}
 		xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Raw = rawContent
 		_, err = g.updateKubernetesValidation(xrd)
 		if err != nil {

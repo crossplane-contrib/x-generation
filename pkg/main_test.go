@@ -86,7 +86,7 @@ func Test_tryToGetTags(t *testing.T) {
 					},
 				},
 			},
-			want1:   "tag",
+			want1:   "spec.forProvider.tags",
 			wantErr: false,
 		},
 		{
@@ -174,7 +174,7 @@ func Test_tryToGetTags(t *testing.T) {
 					},
 				},
 			},
-			want1:   "tag",
+			want1:   "spec.forProvider.tags",
 			wantErr: false,
 		},
 		{
@@ -241,7 +241,7 @@ func Test_tryToGetTags(t *testing.T) {
 					},
 				},
 			},
-			want1:   "tagSet",
+			want1:   "spec.forProvider.tagging.tagSet",
 			wantErr: false,
 		},
 		{
@@ -353,7 +353,7 @@ func Test_checkTagType(t *testing.T) {
 				version: "v1alpha1",
 			},
 			want:  "keyValueArray",
-			want1: "tag",
+			want1: "spec.forProvider.tags",
 		},
 		{
 			name: "Should find tagKeyTagValueArray",
@@ -400,7 +400,7 @@ func Test_checkTagType(t *testing.T) {
 				version: "v1alpha1",
 			},
 			want:  "tagKeyTagValueArray",
-			want1: "tag",
+			want1: "spec.forProvider.tags",
 		},
 		{
 			name: "Should find tagObject",
@@ -439,7 +439,7 @@ func Test_checkTagType(t *testing.T) {
 				version: "v1alpha1",
 			},
 			want:  "tagObject",
-			want1: "tag",
+			want1: "spec.forProvider.tags",
 		},
 		{
 			name: "Should find no tags if no tags",
@@ -468,7 +468,7 @@ func Test_checkTagType(t *testing.T) {
 				},
 				version: "v1alpha1",
 			},
-			want:  "",
+			want:  "noTag",
 			want1: "",
 		},
 		{
@@ -515,7 +515,7 @@ func Test_checkTagType(t *testing.T) {
 				},
 				version: "v1alpha1",
 			},
-			want:  "",
+			want:  "noTag",
 			want1: "",
 		},
 		{
@@ -554,7 +554,7 @@ func Test_checkTagType(t *testing.T) {
 				},
 				version: "v1alpha1",
 			},
-			want:  "",
+			want:  "noTag",
 			want1: "",
 		},
 	}
