@@ -267,7 +267,7 @@ autoReadyFunction:
   name: function-auto-ready
 ```
 
-Using the property `additionalPipelineSteps` one can configure x-generation to add additional pipelinesteps before ore after the default patch-and-transform step. Additional pipeline steps need a `step` and a `functionRef.name`. If you want to add the step before the patch-and-transform part, set `bevore` to true, by default the step will be appended. To add a step conditionally, use `condition`, here you can add a CEL string to determine if the composition will include the step. At the moment, the only properties that can be used in the CEL string are tagProperty and tagType, both will be determined by x-generation. To configure the iput of the pipeline-step, use the `input` field. Inside the input the placeholders `{tagType}` and `{tagProperty}` will be replaced by the values determined by x-generation.
+Using the property `additionalPipelineSteps` one can configure x-generation to add additional pipeline steps before or after the default patch-and-transform step. Additional pipeline steps need a `step` and a `functionRef.name`. If you want to add the step before the patch-and-transform part, set `bevore` to true, by default the step will be appended. To add a step conditionally, use `condition`, here you can add a CEL string to determine if the composition will include the step. At the moment, the only properties that can be used in the CEL string are tagProperty and tagType, both will be determined by x-generation. To configure the iput of the pipeline step, use the `input` field. Inside the input the placeholders `{tagType}` and `{tagProperty}` will be replaced by the values determined by x-generation.
 
 A example of `additionalPipelineSteps` could look like:
 

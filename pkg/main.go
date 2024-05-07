@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -132,7 +131,7 @@ func (g *Generator) LoadCRD(generatorConfig *t.GeneratorConfig) error {
 		return errors.Errorf("Get CRD: %v\n", err)
 	}
 
-	crd, err := ioutil.ReadFile(crdTempFile)
+	crd, err := os.ReadFile(crdTempFile)
 	if err != nil {
 		return errors.Errorf("Error reading from CRD tempfile: %v\n", err)
 	}
@@ -397,7 +396,7 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 
 			// Check if file already exists
 			if _, err := os.Stat(fp); err == nil {
-				yi, err := ioutil.ReadFile(fp)
+				yi, err := os.ReadFile(fp)
 				if err != nil {
 					fmt.Printf("Error reading from existing output file: %v", err)
 				}
@@ -664,7 +663,7 @@ func parseArgs(configFile, generatorFile, inputPath, scriptFile, scriptPath, out
 // Load the GeneratorConfig from the given path
 func loadGeneratorConfig(path string) (*t.GeneratorConfig, error) {
 	var generatorConfig t.GeneratorConfig
-	y, err := ioutil.ReadFile(path)
+	y, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

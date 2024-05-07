@@ -536,16 +536,6 @@ func generateLabelPatchset(name string, fields []string) p.PatchSet {
 		Patches: patches,
 	}
 }
-func generateAnnotationPatchset(name string, fields []string) p.PatchSet {
-
-	labelFields := fieldsTo("metadata.annotations", fields)
-	patches := generateOptionalToFromPatches(labelFields, p.PatchTypeFromCompositeFieldPath)
-
-	return p.PatchSet{
-		Name:    name,
-		Patches: patches,
-	}
-}
 
 func (g *XGenerator) nameToPlural() string {
 	if g.Plural != nil {

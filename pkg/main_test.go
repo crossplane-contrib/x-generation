@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -2491,7 +2490,7 @@ func Test_tryProperties(t *testing.T) {
 			g.Exec(&gConfig, sp, "", "")
 
 			path := filepath.Join(tempDir, "definition.yaml")
-			y, err := ioutil.ReadFile(path)
+			y, err := os.ReadFile(path)
 
 			if err != nil {
 				t.Errorf("could not load definition.yaml file")
@@ -2656,7 +2655,7 @@ func Test_noDefaultPatch(t *testing.T) {
 		g.Exec(&gConfig, sp, "", "")
 
 		path := filepath.Join(tempDir, "composition-configuration.yaml")
-		y, err := ioutil.ReadFile(path)
+		y, err := os.ReadFile(path)
 
 		if err != nil {
 			t.Errorf("could not load definition.yaml file")
