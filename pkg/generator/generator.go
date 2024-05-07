@@ -251,7 +251,12 @@ func (g *XGenerator) GenerateComposition() ([]NamedComposition, error) {
 			Patches: g.generateSortedPropertyPatchesFor(*xrdStatusSchema, "status", p.PatchTypeToCompositeFieldPath),
 		})
 
-		patchSets = append(patchSets, generateLabelPatchset("Labels", g.Labels.FromCRD))
+		labelPatchset := generateLabelPatchset("Labels", g.Labels.FromCRD)
+
+		if len(labelPatchset.Patches) > 0 {
+
+			patchSets = append(patchSets, labelPatchset)
+		}
 
 		// composition.Spec.PatchSets = patchSets
 
@@ -702,6 +707,19 @@ func (g *XGenerator) getIgnored() []string {
 }
 
 func (g *XGenerator) generateBase(comp t.Composition) []byte {
+
+	version, _ := g.getVersion()
+	spec := version.Schema.OpenAPIV3Schema.Properties["spec"]
+
+	baseSpec := map[string]interface{}{}
+
+	if _, ok := spec.Properties["providerConfigRef"]; ok {
+
+		baseSpec["providerConfigRef"] = map[string]interface{}{
+			"name": "default",
+		}
+	}
+
 	commonLabels := map[string]string{}
 
 	for key, value := range g.Labels.Common {
@@ -711,11 +729,7 @@ func (g *XGenerator) generateBase(comp t.Composition) []byte {
 		"apiVersion": g.Crd.Spec.Group + "/" + g.Provider.CRD.Version,
 		"kind":       &g.Crd.Spec.Names.Kind,
 		"metadata":   map[string]interface{}{},
-		"spec": map[string]interface{}{
-			"providerConfigRef": map[string]interface{}{
-				"name": "default",
-			},
-		},
+		"spec":       baseSpec,
 	}
 
 	if len(commonLabels) > 0 {
