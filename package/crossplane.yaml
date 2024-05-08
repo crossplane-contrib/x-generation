@@ -30,4 +30,4 @@ spec:
     - provider:  xpkg.upbound.io/upbound/provider-family-aws
       version: ">=v1.4.0"
     - provider:  xpkg.upbound.io/upbound/provider-aws-iam
-      version: ">=v1.4s.0"
+      version: ">=v1.4.0"
