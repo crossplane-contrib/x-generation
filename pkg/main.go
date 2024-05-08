@@ -61,6 +61,7 @@ type Generator struct {
 	AdditionalPipelineSteps []t.PipelineStep         `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
 	TagType                 *string                  `yaml:"tagType,omitempty" json:"tagType,omitempty"`
 	TagProperty             *string                  `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
+	UsePipeline             *bool                    `yaml:"usePipeline,omitempty" json:"usePipeline,omitempty"`
 
 	crd        extv1.CustomResourceDefinition
 	crdSource  string
@@ -297,7 +298,7 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 	header := []byte(fmt.Sprintf(autogenHeader,
 		time.Now().Format("15:04:05 on 01-02-2006"),
 	))
-	if generatorConfig.UsePipeline == nil || !*generatorConfig.UsePipeline {
+	if (generatorConfig.UsePipeline == nil || !*generatorConfig.UsePipeline) && (g.UsePipeline == nil || !*g.UsePipeline) {
 		var fl string
 		if scriptFileOverride != "" {
 			fl = filepath.Join(scriptPath, scriptFileOverride)

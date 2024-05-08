@@ -96,6 +96,30 @@ spec:
       key: key
 EOF
 
+echo "Creating an environmentconfig config"
+cat <<EOF | ${KUBECTL} apply -f -
+---
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: EnvironmentConfig
+metadata:
+  name: test
+  labels:
+    region: eu-central-1
+    type: network
+data:
+  aws:
+    account:
+      id: "123456789101"
+      name: test
+    vpc:
+      id: vpc-123456789101
+      name: test
+      subnetIds:
+        - subnet-a
+        - subnet-b
+        - subnet-c
+EOF
+
 ${KUBECTL} create ns assert-db || true
 ${KUBECTL} create ns assert-bucket || true
 ${KUBECTL} create ns assert-bucket-policy || true

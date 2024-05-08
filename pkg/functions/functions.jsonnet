@@ -369,7 +369,7 @@
   ),
   GenTagsPatch(tagType, tags, tagProperty):: (
   local tagProp = if tagProperty == "tags" then "tags" else if tagProperty == "tagSet" then "tagging.tagSet";
-  if  tagType != "" then [
+  if  tagType != "noTag" then [
     {
       name: "Tags",
       patches: if  tagType == "keyValueArray" then [

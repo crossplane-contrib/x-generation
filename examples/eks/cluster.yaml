@@ -3,12 +3,16 @@ kind: CompositeCluster
 metadata:
   name: test
   annotations:
+    uptest.upbound.io/conditions: "Ready=False"
+    uptest.upbound.io/post-assert-hook: "../../test/tests/package/eks-cluster/post-assert.sh ${KUBECTL} ${KUTTL}"
     render.crossplane.io/composition-path: package/EKS-Cluster/composition-xcluster.eks.aws.example.cloud.yaml
     render.crossplane.io/function-path: examples/functions.yaml
-    render.crossplane.io/environment-path: examples/environmentconfig.yaml
+    render.crossplane.io/environment-path: test/environmentconfig.yaml
 spec:
   forProvider:
     region: eu-central-1
     roleArnSelector:
       matchLabels:
         testing.upbound.io/example-name: example-pia
+  providerConfigRef:
+    name: 123456789101-example
