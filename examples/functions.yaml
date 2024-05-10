@@ -1,0 +1,35 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-environment-configs
+  annotations:
+    uptest.upbound.io/conditions: "Healthy=True"
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-environment-configs:v0.0.7
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-go-templating
+  annotations:
+    uptest.upbound.io/conditions: "Healthy=True"
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.4.1
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+  annotations:
+    uptest.upbound.io/conditions: "Healthy=True"
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.4.0
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-auto-ready
+  annotations:
+    uptest.upbound.io/conditions: "Healthy=True"
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-auto-ready:v0.2.1

@@ -3,15 +3,16 @@ set -aeuo pipefail
 
 echo "Running setup.sh"
 echo "Waiting until configuration package is healthy/installed..."
-${KUBECTL} wait configuration.pkg x-generation --for=condition=Healthy --timeout 5m
-${KUBECTL} wait configuration.pkg x-generation --for=condition=Installed --timeout 5m
+"${KUBECTL}" wait configuration.pkg --all --for=condition=Healthy --timeout 5m
+"${KUBECTL}" wait configuration.pkg --all --for=condition=Installed --timeout 5m
+"${KUBECTL}" wait configurationrevisions.pkg --all --for=condition=Healthy --timeout 5m
 ${KUBECTL} wait "provider.pkg.crossplane.io/crossplane-contrib-provider-aws" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.aws.crossplane.io
 sleep 5
 ${KUBECTL} wait "provider.pkg.crossplane.io/crossplane-contrib-provider-zpa" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.zpa.crossplane.io
 
-${KUBECTL} wait "provider.pkg.crossplane.io/upbound-release-candidates-provider-aws-iam" --for=condition=healthy --timeout=300s
+${KUBECTL} wait "provider.pkg.crossplane.io/upbound-provider-aws-iam" --for=condition=healthy --timeout=300s
 ${KUBECTL} wait --for=condition=established --timeout=300s crd/providerconfigs.aws.upbound.io
 sleep 60
 
@@ -93,6 +94,30 @@ spec:
       namespace: upbound-system
       name: offical-aws-creds
       key: key
+EOF
+
+echo "Creating an environmentconfig config"
+cat <<EOF | ${KUBECTL} apply -f -
+---
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: EnvironmentConfig
+metadata:
+  name: test
+  labels:
+    region: eu-central-1
+    type: network
+data:
+  aws:
+    account:
+      id: "123456789101"
+      name: test
+    vpc:
+      id: vpc-123456789101
+      name: test
+      subnetIds:
+        - subnet-a
+        - subnet-b
+        - subnet-c
 EOF
 
 ${KUBECTL} create ns assert-db || true

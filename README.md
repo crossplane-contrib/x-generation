@@ -21,6 +21,8 @@ In the local configuration, the provider used and labels and tags that should be
 | tags                  | object            | Configure the tags and tag patches for each crd |
 | tags.fromLabels       | array of strings  | For each entry `e` a patch that copies the value of the `metadata.labels[e]` field to a tag with the same name and value is created
 | tags.common           | object of strings | For each property of the object a tag with the given value is created in the resource |
+| usePipeline           | boolean | if true, x-generation generates compositions in pipeline mode, additional pipelinestepts can be added using `additionalPipelineSteps` |
+| additionalPipelineSteps           | array of objects | add additional pipeline steps when in pipeline mode, see section using pipelelines  |
 
 
 The values in `tags.fromLabels` must exist in `lables.fromCRD` otherwise no values that can be patched to the resources exist.
@@ -87,7 +89,6 @@ The local configuration is placed in the subfolder of the composition to be crea
 | overrideFieldsInClaim          | object                | This optional property can be used to override the names in the composite and the claim or add properties. See description below |
 | patchName          | boolean                | If set to false, the name of the object will not be patched, otherwise`patchExternalName` decides if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]` |
 | patchExternalName          | boolean                | Decides if if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]`. Not applied if `patchName` is false |
-
 
 
 ## overrideFieldsInClaim
@@ -256,3 +257,48 @@ x-generation is under the Apache 2.0 license.
 | pkg/functions/                 | generation functions  | [crossplane-composition-generator](https://github.com/benagricola/crossplane-composition-generator) |
 | build &                        | submodule for build   | [upbound/build](https://github.com/upbound/build) |
 | make e2e                       | kuttl-tests           | [upbound/uptest](https://github.com/upbound/uptest)|
+
+
+## using pipelelines
+When setting the property `usePipeline` to true, x-generation generates composition with `mode: pipeline`. By default the standard function-patch-and-transform function is used to generate the resource and the corresponding patches. Using the prooperty `patchAndTransfromFunction` the function name can be overwritten. The attribute `autoReadyFunction` can be used to configure if and witch autoReady function will be used in the pipeline. The default is:
+```yaml
+autoReadyFunction:
+  generate: true
+  name: function-auto-ready
+```
+
+Using the property `additionalPipelineSteps` one can configure x-generation to add additional pipeline steps before or after the default patch-and-transform step. Additional pipeline steps need a `step` and a `functionRef.name`. If you want to add the step before the patch-and-transform part, set `bevore` to true, by default the step will be appended. To add a step conditionally, use `condition`, here you can add a CEL string to determine if the composition will include the step. At the moment, the only properties that can be used in the CEL string are tagProperty and tagType, both will be determined by x-generation. To configure the iput of the pipeline step, use the `input` field. Inside the input the placeholders `{tagType}` and `{tagProperty}` will be replaced by the values determined by x-generation.
+
+A example of `additionalPipelineSteps` could look like:
+
+```yaml
+usePipeline: true
+additionalPipelineSteps: 
+  - step: labels
+    functionRef:
+      name: function-add-labels
+    input: 
+      apiVersion: labels.fn.crossplane.io/v1beta1
+      kind: Input
+      labels:
+        exclude:
+          - "helm.*"
+          - "kustomize.*"
+          - "crossplane.*"
+      annotations:
+        ignore: true
+  - step: tag
+    functionRef:
+      name: function-add-tags
+    condition: "tagType != 'noTag'"
+    input: 
+      apiVersion: tags.fn.crossplane.io/v1beta1
+      kind: Input
+      tagsFrom: metadata.labels
+      ignoreTags:
+        - kustomize.*
+        - crossplane.*
+      tags:
+        - type: "{tagType}"
+          path: "{tagProperty}"
+```

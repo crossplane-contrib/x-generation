@@ -1,0 +1,31 @@
+---
+apiVersion: eks.aws.upbound.io/v1beta1
+kind: Cluster
+metadata:
+  labels:
+    commonLabelA: commonLabelAValue
+    commonLabelB: commonLabelBValue
+    crossplane.io/claim-name: ""
+    crossplane.io/claim-namespace: ""
+    crossplane.io/composite: test
+spec:
+  deletionPolicy: Delete
+  forProvider:
+    region: eu-central-1
+    roleArnSelector:
+      matchLabels:
+        testing.upbound.io/example-name: example-pia
+    tags:
+      crossplane-kind: cluster.eks.aws.upbound.io
+      crossplane-providerconfig: 123456789101-example
+    vpcConfig:
+    - index: "0"
+      subnetIds:
+      - subnet-a
+      - subnet-b
+      - subnet-c
+  initProvider: {}
+  managementPolicies:
+  - '*'
+  providerConfigRef:
+    name: 123456789101-example

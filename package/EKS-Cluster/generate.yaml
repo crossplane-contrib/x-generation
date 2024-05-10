@@ -1,0 +1,46 @@
+group: eks.aws.example.cloud
+name: Cluster
+version: v1beta1
+provider:
+  baseURL: https://raw.githubusercontent.com/crossplane-contrib/%s/%s/package/crds/%s
+  name: provider-upjet-aws
+  version: v1.3.1
+  crd:
+    file: eks.aws.upbound.io_clusters.yaml
+    version: v1beta1
+compositions:
+  - name: xcluster.eks.aws.example.cloud
+    provider: example
+    default: true
+overrideFieldsInClaim:
+  - claimPath: spec.initProvider.vpcConfig
+    ignore: true
+  - claimPath: spec.forProvider.vpcConfig
+    ignore: true
+    overrideSettings:
+      patches:
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: aws.vpc.subnetIds
+          toFieldPath: spec.forProvider.vpcConfig[0].subnetIds
+          policy:
+            fromFieldPath: Required
+usePipeline: true
+additionalPipelineSteps:
+  - before: true
+    step: environmentConfigs
+    functionRef:
+      name: function-environment-configs
+    input:
+      apiVersion: environmentconfigs.fn.crossplane.io/v1beta1
+      kind: Input
+      spec:
+        environmentConfigs:
+          - type: Selector
+            selector:
+              matchLabels:
+                - key: region
+                  type: FromCompositeFieldPath
+                  valueFromFieldPath: spec.forProvider.region
+                - key: type
+                  type: Value
+                  value: network

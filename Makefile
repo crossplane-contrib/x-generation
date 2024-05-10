@@ -13,7 +13,7 @@ PLATFORMS ?= linux_amd64
 # ====================================================================================
 # Setup Kubernetes tools
 
-UP_VERSION = v0.14.0
+UP_VERSION = v0.28.0
 UP_CHANNEL = stable
 
 -include build/makelib/k8s_tools.mk
@@ -101,5 +101,21 @@ uptest: build $(UPTEST) $(KUBECTL) $(KUTTL) local.xpkg.deploy.configuration.$(PR
 	@$(INFO) running automated tests
 	@KUBECTL=$(KUBECTL) KUTTL=$(KUTTL) $(UPTEST) e2e ${X_EXAMPLES} --setup-script=test/setup.sh --default-timeout=2400 || $(FAIL)
 	@$(OK) running automated tests
+
+render:
+	@indir="./examples"; \
+	for file in $$(find $$indir -type f -name '*.yaml' ); do \
+	    doc_count=$$(grep -c '^---' "$$file"); \
+	    if [[ $$doc_count -gt 0 ]]; then \
+	        continue; \
+	    fi; \
+	    COMPOSITION=$$(yq eval '.metadata.annotations."render.crossplane.io/composition-path"' $$file); \
+	    FUNCTION=$$(yq eval '.metadata.annotations."render.crossplane.io/function-path"' $$file); \
+	    ENVIRONMENT=$$(yq eval '.metadata.annotations."render.crossplane.io/environment-path"' $$file); \
+	    if [[ "$$COMPOSITION" == "null" || "$$FUNCTION" == "null" || "$$ENVIRONMENT" == "null" ]]; then \
+	        continue; \
+	    fi; \
+	    crossplane beta render $$file $$COMPOSITION $$FUNCTION -e $$ENVIRONMENT -x -r; \
+	done
 
 e2e: controlplane.up uptest

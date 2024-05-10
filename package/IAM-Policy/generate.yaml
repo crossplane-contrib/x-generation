@@ -4,7 +4,7 @@ version: v1alpha1
 provider:
   baseURL: https://raw.githubusercontent.com/upbound/%s/%s/package/crds/%s
   name: provider-aws
-  version: v0.34.0
+  version: v0.47.0
   crd:
     file: iam.aws.upbound.io_policies.yaml
     version: v1beta1
