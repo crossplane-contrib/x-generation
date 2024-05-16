@@ -101,7 +101,7 @@ func Test_generateOverriteFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := generateOverriteFields(tt.base, tt.overridePaths)
+			got := applyOverrideFields(tt.base, tt.overridePaths)
 			object, err := json.Marshal(got)
 			if err != nil {
 				t.Errorf("error marshalling object %v", err)

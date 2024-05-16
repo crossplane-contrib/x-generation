@@ -54,7 +54,7 @@ type OverrideFieldDefinition struct {
 	Schema        *v1.JSONSchemaProps
 	Required      bool
 	Replacement   bool
-	PathSegments  []pathSegemnt
+	PathSegments  []pathSegment
 	Patches       []p.PatchSetPatch
 	OriginalEnum  []v1.JSON
 	Overwrites    *t.OverrideFieldInClaim
@@ -734,17 +734,17 @@ func (g *XGenerator) generateBase(comp t.Composition) []byte {
 		}
 	}
 
-	base = generateOverriteFields(base, g.OverrideFields)
+	base = applyOverrideFields(base, g.OverrideFields)
 
 	object, err := json.Marshal(base)
 	if err != nil {
-		fmt.Println("error")
+		fmt.Printf("unable to marshal base: %v\n", err)
 	}
 
 	return object
 }
 
-func generateOverriteFields(base map[string]interface{}, overrideFields []t.OverrideField) map[string]interface{} {
+func applyOverrideFields(base map[string]interface{}, overrideFields []t.OverrideField) map[string]interface{} {
 	for _, overwite := range overrideFields {
 		if overwite.Value != nil {
 			path := splitPath(overwite.Path)
@@ -809,15 +809,15 @@ func generateOverriteFields(base map[string]interface{}, overrideFields []t.Over
 	return base
 }
 
-type pathSegemnt struct {
+type pathSegment struct {
 	path          string
 	pathType      string
 	arrayPosition int
 }
 
-func splitPath(path string) []pathSegemnt {
+func splitPath(path string) []pathSegment {
 	inString := false
-	result := []pathSegemnt{}
+	result := []pathSegment{}
 	current := ""
 	escaped := false
 	for _, r := range path {
@@ -831,7 +831,7 @@ func splitPath(path string) []pathSegemnt {
 		case '.':
 			if current != "" {
 				if !inString && !escaped {
-					segment := pathSegemnt{
+					segment := pathSegment{
 						path:     current,
 						pathType: "object",
 					}
@@ -843,7 +843,7 @@ func splitPath(path string) []pathSegemnt {
 			}
 		case '[':
 			if !inString && !escaped {
-				segment := pathSegemnt{
+				segment := pathSegment{
 					path:     current,
 					pathType: "object",
 				}
@@ -861,7 +861,7 @@ func splitPath(path string) []pathSegemnt {
 					lastSegemnt.arrayPosition = arrayIndex
 					result[len(result)-1] = lastSegemnt
 				} else {
-					segment := pathSegemnt{
+					segment := pathSegment{
 						path:     current,
 						pathType: "object",
 					}
@@ -879,7 +879,7 @@ func splitPath(path string) []pathSegemnt {
 		}
 	}
 	if current != "" {
-		segment := pathSegemnt{
+		segment := pathSegment{
 			path:     current,
 			pathType: "object",
 		}
