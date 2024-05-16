@@ -7,7 +7,7 @@ import (
 	tp "github.com/crossplane-contrib/x-generation/pkg/types"
 )
 
-func Test_generateOverriteFields(t *testing.T) {
+func Test_generateOverrideFields(t *testing.T) {
 	tests := []struct {
 		name          string
 		base          map[string]interface{}
