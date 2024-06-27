@@ -1,0 +1,25 @@
+apiVersion: rds.aws.example.cloud/v1alpha1
+kind: Cluster
+metadata:
+  name: example-db-cluster
+  namespace: assert-db
+  annotations:
+    render.crossplane.io/composition-path: package/RDS-Cluster/composition-compositedbcluster.rds.aws.example.cloud.yaml
+    render.crossplane.io/function-path: examples/functions.yaml
+    render.crossplane.io/environment-path: test/environmentconfig.yaml
+spec:
+  forProvider:
+    engine: aurora-postgresql
+    masterPasswordSecretRef:
+      key: password
+      name: sample-cluster-password
+      namespace: upbound-system
+    masterUsername: cpadmin
+    region: us-west-1
+    skipFinalSnapshot: true
+    scalingConfiguration:
+      autoPause: true
+      maxCapacity: 8
+  writeConnectionSecretToRef:
+    name: sample-rds-cluster-secret
+    namespace: upbound-system
