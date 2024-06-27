@@ -1,0 +1,21 @@
+group: rds.aws.example.cloud
+name: DBCluster
+version: v1alpha1
+provider:
+  baseURL: https://raw.githubusercontent.com/upbound/%s/%s/package/crds/%s
+  name: provider-aws
+  version: v1.7.0 # use this version to get rid of the 1 element arrays
+  crd:
+    file: rds.aws.upbound.io_clusters.yaml
+    version: v1beta2 # bump to v1beta2
+ignore: false
+usePipeline: true
+connectionSecretKeys:
+  - username
+  - password
+  - endpoint
+  - port
+compositions:
+  - name: compositedbcluster.rds.aws.example.cloud
+    provider: example
+    default: true
