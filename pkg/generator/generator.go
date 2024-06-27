@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	p "github.com/crossplane-contrib/function-patch-and-transform/input/v1beta1"
@@ -52,7 +54,7 @@ type OverrideFieldDefinition struct {
 	Schema        *v1.JSONSchemaProps
 	Required      bool
 	Replacement   bool
-	PathSegments  []string
+	PathSegments  []pathSegment
 	Patches       []p.PatchSetPatch
 	OriginalEnum  []v1.JSON
 	Overwrites    *t.OverrideFieldInClaim
@@ -732,53 +734,141 @@ func (g *XGenerator) generateBase(comp t.Composition) []byte {
 		}
 	}
 
-	//overwites := map[string]interface{}{}
-	for _, overwite := range g.OverrideFields {
-		if overwite.Value != nil {
-			//overwites[overwite.Path] = overwite.Value
-			path := splitPath(overwite.Path)
-			c := &base
-			pathLength := len(path)
-			for i := 0; i < pathLength-1; i++ {
-				p := path[i]
-				//for _, p := range path {
-				if (*c)[p] == nil {
-					(*c)[p] = map[string]interface{}{}
-				}
-				b := (*c)[p].(map[string]interface{})
-				c = &b
-			}
-			(*c)[path[pathLength-1]] = overwite.Value
-		}
-	}
+	base = applyOverrideFields(base, g.OverrideFields)
 
 	object, err := json.Marshal(base)
 	if err != nil {
-		fmt.Println("error")
+		fmt.Printf("unable to marshal base: %v\n", err)
 	}
 
 	return object
 }
 
-func splitPath(path string) []string {
+func applyOverrideFields(base map[string]interface{}, overrideFields []t.OverrideField) map[string]interface{} {
+	for _, overwite := range overrideFields {
+		if overwite.Value != nil {
+			path := splitPath(overwite.Path)
+			var current interface{}
+			current = base
+			pathLength := len(path)
+
+			for i := 0; i < pathLength-1; i++ {
+				segment := path[i]
+				property := path[i].path
+				if segment.pathType == "object" {
+					if current.(map[string]interface{})[property] == nil {
+						current.(map[string]interface{})[property] = map[string]interface{}{}
+					}
+
+					current = current.(map[string]interface{})[property].(map[string]interface{})
+				} else if segment.pathType == "array" {
+					if current.(map[string]interface{})[property] == nil {
+						current.(map[string]interface{})[property] = []map[string]interface{}{}
+					}
+
+					var b interface{}
+					b = current.(map[string]interface{})[property].([]map[string]interface{})
+					currentSize := len(b.([]map[string]interface{}))
+					wantedSize := segment.arrayPosition + 1
+					if currentSize < wantedSize {
+						sizeToGrow := wantedSize - currentSize
+						b = slices.Grow(b.([]map[string]interface{}), sizeToGrow)
+						b = b.([]map[string]interface{})[:cap(b.([]map[string]interface{}))]
+						b.([]map[string]interface{})[segment.arrayPosition] = map[string]interface{}{}
+					}
+					current.(map[string]interface{})[property] = b
+					current = b.([]map[string]interface{})[segment.arrayPosition]
+				}
+			}
+			segment := path[pathLength-1]
+			if segment.pathType == "object" {
+				(current).(map[string]interface{})[path[pathLength-1].path] = overwite.Value
+			}
+			if segment.pathType == "array" {
+				property := path[pathLength-1].path
+
+				if (current.(map[string]interface{}))[property] == nil {
+					(current.(map[string]interface{}))[property] = []interface{}{}
+				}
+
+				var b interface{}
+				b = (current.(map[string]interface{}))[property].([]interface{})
+				currentSize := len(b.([]interface{}))
+				wantedSize := segment.arrayPosition + 1
+				if currentSize < wantedSize {
+					sizeToGrow := wantedSize - currentSize
+					b = slices.Grow(b.([]interface{}), sizeToGrow)
+					b = b.([]interface{})[:cap(b.([]interface{}))]
+					(b.([]interface{})[segment.arrayPosition]) = overwite.Value
+				}
+				current.(map[string]interface{})[property] = b
+
+			}
+		}
+	}
+	return base
+}
+
+type pathSegment struct {
+	path          string
+	pathType      string
+	arrayPosition int
+}
+
+func splitPath(path string) []pathSegment {
 	inString := false
-	result := []string{}
+	result := []pathSegment{}
 	current := ""
 	escaped := false
 	for _, r := range path {
 		switch r {
 		case '"':
-			current += string(r)
 			inString = !inString
 			escaped = false
 
 		case '\\':
-			current += string(r)
 			escaped = true
 		case '.':
+			if current != "" {
+				if !inString && !escaped {
+					segment := pathSegment{
+						path:     current,
+						pathType: "object",
+					}
+					result = append(result, segment)
+					current = ""
+				} else {
+					current += string(r)
+				}
+			}
+		case '[':
 			if !inString && !escaped {
-				result = append(result, current)
+				segment := pathSegment{
+					path:     current,
+					pathType: "object",
+				}
+				result = append(result, segment)
 				current = ""
+			} else {
+				current += string(r)
+			}
+		case ']':
+			if !inString && !escaped {
+				lastSegemnt := result[len(result)-1]
+				arrayIndex, err := strconv.Atoi(current)
+				if err == nil {
+					lastSegemnt.pathType = "array"
+					lastSegemnt.arrayPosition = arrayIndex
+					result[len(result)-1] = lastSegemnt
+				} else {
+					segment := pathSegment{
+						path:     current,
+						pathType: "object",
+					}
+					result = append(result, segment)
+				}
+				current = ""
+
 			} else {
 				current += string(r)
 			}
@@ -788,7 +878,13 @@ func splitPath(path string) []string {
 
 		}
 	}
-	result = append(result, current)
+	if current != "" {
+		segment := pathSegment{
+			path:     current,
+			pathType: "object",
+		}
+		result = append(result, segment)
+	}
 	return result
 }
 
@@ -832,7 +928,7 @@ func (g *XGenerator) generateAdditonalPipelineStep(s t.PipelineStep) (*c.Pipelin
 
 func (g *XGenerator) overwrittenFields(schema *v1.JSONSchemaProps, path string) error {
 	for _, o := range g.overrideFieldDefinitions {
-		if o.PathSegments[0] == path && !o.IgnoreInClaim {
+		if o.PathSegments[0].path == path && !o.IgnoreInClaim {
 			err := overwrittenFields(schema, path, o, 1)
 			if err != nil {
 				return err
@@ -845,7 +941,7 @@ func (g *XGenerator) overwrittenFields(schema *v1.JSONSchemaProps, path string) 
 func overwrittenFields(schema *v1.JSONSchemaProps, path string, definition *OverrideFieldDefinition, level int) error {
 	if len(definition.PathSegments)-1 > level {
 		if schema.Type == "object" {
-			pathSegment := definition.PathSegments[level]
+			pathSegment := definition.PathSegments[level].path
 			prop, ok := schema.Properties[pathSegment]
 			if !ok {
 				schema.Properties[pathSegment] = v1.JSONSchemaProps{
@@ -860,7 +956,7 @@ func overwrittenFields(schema *v1.JSONSchemaProps, path string, definition *Over
 			}
 		}
 	} else {
-		pathSegment := definition.PathSegments[level]
+		pathSegment := definition.PathSegments[level].path
 		if definition.Schema == nil {
 			return fmt.Errorf("schema must be given for new property: %s", definition.ClaimPath)
 		}
