@@ -46,6 +46,15 @@ type XGenerator struct {
 	GeneratorConfig          t.GeneratorConfig
 	xrdSchema                *v1.JSONSchemaProps
 	overrideFieldDefinitions []*OverrideFieldDefinition
+	// feature/expose-versions-configs
+	Versions   []VersionConfig           `yaml:"versions" json:"versions"`
+}
+
+// feature/expose-versions-configs
+type VersionConfig struct {
+    Name         string `yaml:"name" json:"name"`
+    Served       bool   `yaml:"served" json:"served"`
+    Referenceable bool   `yaml:"referenceable" json:"referenceable"`
 }
 
 type OverrideFieldDefinition struct {
@@ -70,7 +79,6 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 
 	plural := g.nameToPlural()
 	defaultCompositionName, _ := g.getDefaultCompositionName()
-	version, _ := g.getVersion()
 	status, err := g.generateSchema("status")
 	if err != nil {
 		return nil, err
@@ -90,6 +98,54 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 		return nil, err
 	}
 	g.xrdSchema = specSchema
+
+	// feature/expose-versions-configs
+
+	var crdVersions []c.CompositeResourceDefinitionVersion
+
+	// default Version configs
+	defaultVersion := c.CompositeResourceDefinitionVersion {
+		Name:          g.Version,
+		Referenceable: true,
+		Served:        true,
+		Schema: &c.CompositeResourceValidation {
+			OpenAPIV3Schema: runtime.RawExtension {
+				Object: &unstructured.Unstructured {
+					Object: map[string]interface{} {
+						"properties": map[string]interface{} {
+							"spec":   g.xrdSchema,
+							"status": status,
+						},
+					},
+				},
+			},
+		},
+	}
+	crdVersions = []c.CompositeResourceDefinitionVersion{defaultVersion}
+
+	if g.Versions != nil && len(g.Versions) > 0 {
+		crdVersions = nil // Clear the default version if there are custom versions
+		for _, version := range g.Versions {
+			crdVersions = append(crdVersions, c.CompositeResourceDefinitionVersion{
+				Name:          version.Name,
+				Referenceable: version.Referenceable,
+				Served:        version.Served,
+				Schema: &c.CompositeResourceValidation {
+					OpenAPIV3Schema: runtime.RawExtension {
+						Object: &unstructured.Unstructured {
+							Object: map[string]interface{} {
+								"properties": map[string]interface{} {
+									"spec":   g.xrdSchema,
+									"status": status,
+								},
+							},
+						},
+					},
+				},
+			})
+		}
+	}
+
 	xrd := c.CompositeResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apiextensions.crossplane.io/v1",
@@ -112,26 +168,8 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 				Plural:     "composite" + plural,
 				Categories: g.generateCategories(),
 			},
-			Versions: []c.CompositeResourceDefinitionVersion{
-				{
-					Name:          g.Version,
-					Referenceable: version.Storage,
-					Served:        version.Served,
-					Schema: &c.CompositeResourceValidation{
-						OpenAPIV3Schema: runtime.RawExtension{
-							Object: &unstructured.Unstructured{
-								Object: map[string]interface{}{
-									"properties": map[string]interface{}{
-										"spec":   g.xrdSchema,
-										"status": status,
-									},
-								},
-							},
-						},
-					},
-					AdditionalPrinterColumns: filterCustomResourceColumnDefinitions(version.AdditionalPrinterColumns),
-				},
-			},
+			// feature/expose-versions-configs
+			Versions: crdVersions,
 		},
 	}
 
