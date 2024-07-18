@@ -46,11 +46,10 @@ type XGenerator struct {
 	GeneratorConfig          t.GeneratorConfig
 	xrdSchema                *v1.JSONSchemaProps
 	overrideFieldDefinitions []*OverrideFieldDefinition
-	// feature/expose-versions-configs
+
 	Versions   []VersionConfig           `yaml:"versions" json:"versions"`
 }
 
-// feature/expose-versions-configs
 type VersionConfig struct {
     Name         string `yaml:"name" json:"name"`
     Served       bool   `yaml:"served" json:"served"`
@@ -98,8 +97,6 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 		return nil, err
 	}
 	g.xrdSchema = specSchema
-
-	// feature/expose-versions-configs
 
 	var crdVersions []c.CompositeResourceDefinitionVersion
 
@@ -168,7 +165,6 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 				Plural:     "composite" + plural,
 				Categories: g.generateCategories(),
 			},
-			// feature/expose-versions-configs
 			Versions: crdVersions,
 		},
 	}
