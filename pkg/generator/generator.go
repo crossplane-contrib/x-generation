@@ -136,7 +136,6 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 	}
 
 	//
-
 	// g.generateSchema()
 	//
 
