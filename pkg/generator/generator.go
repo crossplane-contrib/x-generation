@@ -115,8 +115,8 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 			Versions: []c.CompositeResourceDefinitionVersion{
 				{
 					Name:          g.Version,
-					Referenceable: version.Storage,
-					Served:        version.Served,
+					Referenceable: true,
+					Served:        true,
 					Schema: &c.CompositeResourceValidation{
 						OpenAPIV3Schema: runtime.RawExtension{
 							Object: &unstructured.Unstructured{
@@ -136,7 +136,6 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 	}
 
 	//
-
 	// g.generateSchema()
 	//
 
