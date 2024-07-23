@@ -112,16 +112,16 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 				Plural:     "composite" + plural,
 				Categories: g.generateCategories(),
 			},
-			Versions: []c.CompositeResourceDefinitionVersion {
+			Versions: []c.CompositeResourceDefinitionVersion{
 				{
 					Name:          g.Version,
 					Referenceable: true,
 					Served:        true,
-					Schema: &c.CompositeResourceValidation {
-						OpenAPIV3Schema: runtime.RawExtension {
-							Object: &unstructured.Unstructured {
+					Schema: &c.CompositeResourceValidation{
+						OpenAPIV3Schema: runtime.RawExtension{
+							Object: &unstructured.Unstructured{
 								Object: map[string]interface{} {
-									"properties": map[string]interface{} {
+									"properties": map[string]interface{}{
 										"spec":   g.xrdSchema,
 										"status": status,
 									},
