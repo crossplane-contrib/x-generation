@@ -120,7 +120,7 @@ func (g *XGenerator) GenerateXRD() (*c.CompositeResourceDefinition, error) {
 					Schema: &c.CompositeResourceValidation{
 						OpenAPIV3Schema: runtime.RawExtension{
 							Object: &unstructured.Unstructured{
-								Object: map[string]interface{} {
+								Object: map[string]interface{}{
 									"properties": map[string]interface{}{
 										"spec":   g.xrdSchema,
 										"status": status,
