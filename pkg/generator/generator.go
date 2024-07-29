@@ -34,6 +34,7 @@ type XGenerator struct {
 	OverrideFieldsInClaim     []t.OverrideFieldInClaim    `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
 	Labels                    t.LocalLabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
 	ReadinessChecks           *bool                       `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
+	ResourceName              *string                     `yaml:"resourceName,omitempty" json:"resourceName,omitempty"`
 	UIDFieldPath              *string                     `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
 	ExpandCompositionName     *bool                       `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
 	AdditionalPipelineSteps   []t.PipelineStep            `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
@@ -152,9 +153,12 @@ func (g *XGenerator) GenerateComposition() ([]NamedComposition, error) {
 
 	for _, comp := range g.Compositions {
 
+		rName := g.Crd.Spec.Names.Kind
+		if g.ResourceName != nil {
+			rName = *g.ResourceName
+		}
 		resource := p.ComposedTemplate{
-
-			Name: g.Crd.Spec.Names.Kind,
+			Name: rName,
 			Base: &runtime.RawExtension{
 				Raw: g.generateBase(comp),
 			},
