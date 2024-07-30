@@ -49,6 +49,7 @@ type Generator struct {
 	Ignore                  bool                     `yaml:"ignore"`
 	PatchExternalName       *bool                    `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
 	PatchlName              *bool                    `yaml:"patchName,omitempty" json:"patchName,omitempty"`
+	ResourceName            *string                  `yaml:"resourceName,omitempty" json:"resourceName,omitempty"`
 	UIDFieldPath            *string                  `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
 	OverrideFields          []t.OverrideField        `yaml:"overrideFields" json:"overrideFields"`
 	Compositions            []t.Composition          `yaml:"compositions" json:"compositions"`
@@ -442,6 +443,7 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 			GlobalLabels:              globalLabels,
 			GeneratorConfig:           *generatorConfig,
 			ReadinessChecks:           g.ReadinessChecks,
+			ResourceName:              g.ResourceName,
 			UIDFieldPath:              g.UIDFieldPath,
 			ExpandCompositionName:     generatorConfig.ExpandCompositionName,
 			TagType:                   g.TagType,
