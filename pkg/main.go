@@ -21,6 +21,7 @@ import (
 	getter "github.com/hashicorp/go-getter"
 	"github.com/pkg/errors"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
 const (
@@ -40,29 +41,30 @@ const (
 )
 
 type Generator struct {
-	Group                   string                   `yaml:"group" json:"group"`
-	Name                    string                   `yaml:"name" json:"name"`
-	Plural                  *string                  `yaml:"plural,omitempty" json:"plural,omitempty"`
-	Version                 string                   `yaml:"version" json:"version"`
-	ScriptFileName          *string                  `yaml:"scriptFile,omitempty"`
-	ConnectionSecretKeys    *[]string                `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
-	Ignore                  bool                     `yaml:"ignore"`
-	PatchExternalName       *bool                    `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
-	PatchlName              *bool                    `yaml:"patchName,omitempty" json:"patchName,omitempty"`
-	ResourceName            *string                  `yaml:"resourceName,omitempty" json:"resourceName,omitempty"`
-	UIDFieldPath            *string                  `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
-	OverrideFields          []t.OverrideField        `yaml:"overrideFields" json:"overrideFields"`
-	Compositions            []t.Composition          `yaml:"compositions" json:"compositions"`
-	Tags                    t.LocalTagConfig         `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Labels                  t.LocalLabelConfig       `yaml:"labels,omitempty" json:"labels,omitempty"`
-	Provider                t.ProviderConfig         `yaml:"provider" json:"provider"`
-	ReadinessChecks         *bool                    `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
-	OverrideFieldsInClaim   []t.OverrideFieldInClaim `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
-	ExpandCompositionName   *bool                    `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
-	AdditionalPipelineSteps []t.PipelineStep         `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
-	TagType                 *string                  `yaml:"tagType,omitempty" json:"tagType,omitempty"`
-	TagProperty             *string                  `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
-	UsePipeline             *bool                    `yaml:"usePipeline,omitempty" json:"usePipeline,omitempty"`
+	Group                        string                   `yaml:"group" json:"group"`
+	Name                         string                   `yaml:"name" json:"name"`
+	Plural                       *string                  `yaml:"plural,omitempty" json:"plural,omitempty"`
+	Version                      string                   `yaml:"version" json:"version"`
+	ScriptFileName               *string                  `yaml:"scriptFile,omitempty"`
+	ConnectionSecretKeys         *[]string                `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
+	Ignore                       bool                     `yaml:"ignore"`
+	PatchExternalName            *bool                    `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
+	PatchlName                   *bool                    `yaml:"patchName,omitempty" json:"patchName,omitempty"`
+	ResourceName                 *string                  `yaml:"resourceName,omitempty" json:"resourceName,omitempty"`
+	UIDFieldPath                 *string                  `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
+	OverrideFields               []t.OverrideField        `yaml:"overrideFields" json:"overrideFields"`
+	Compositions                 []t.Composition          `yaml:"compositions" json:"compositions"`
+	Tags                         t.LocalTagConfig         `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Labels                       t.LocalLabelConfig       `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Provider                     t.ProviderConfig         `yaml:"provider" json:"provider"`
+	ReadinessChecks              *bool                    `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
+	OverrideFieldsInClaim        []t.OverrideFieldInClaim `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
+	ExpandCompositionName        *bool                    `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
+	AdditionalPipelineSteps      []t.PipelineStep         `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
+	TagType                      *string                  `yaml:"tagType,omitempty" json:"tagType,omitempty"`
+	TagProperty                  *string                  `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
+	UsePipeline                  *bool                    `yaml:"usePipeline,omitempty" json:"usePipeline,omitempty"`
+	DefaultCompositeDeletePolicy *string                  `yaml:"defaultCompositeDeletePolicy,omitempty" json:"defaultCompositeDeletePolicy,omitempty"`
 
 	crd        extv1.CustomResourceDefinition
 	crdSource  string
@@ -399,6 +401,31 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 					}
 				}
 			}
+
+			// add defaultCompositeDeletePolicy property if its set
+			if g.DefaultCompositeDeletePolicy != nil && fn == "definition" {
+				var xrd crossplanev1.CompositeResourceDefinition
+				err := yaml.Unmarshal(yo, &xrd)
+				if err != nil {
+					fmt.Printf("Error unmarshalling xrd %v", err)
+				} else {
+					updated, err := g.setDefaultCompositeDeletePolicy(&xrd)
+					if err != nil {
+						fmt.Printf("Error updating defaultCompositeDeletePolicy: %v", err)
+					}
+					if updated {
+						yo, err = yaml.Marshal(xrd)
+						if err != nil {
+							fmt.Printf("Error updating definition with new defaultCompositeDeletePolicy: %v", err)
+						}
+						err = yaml.Unmarshal(yo, &fc)
+						if err != nil {
+							fmt.Printf("Error unmarshalling object %v", err)
+						}
+					}
+				}
+			}
+
 			if err != nil {
 				fmt.Printf("Error converting %s to YAML: %v", fn, err)
 			}
@@ -428,29 +455,30 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 		}
 	} else {
 		g2 := generator.XGenerator{
-			Group:                     g.Group,
-			Name:                      g.Name,
-			Plural:                    g.Plural,
-			PatchExternalName:         g.PatchExternalName,
-			PatchlName:                g.PatchlName,
-			ConnectionSecretKeys:      g.ConnectionSecretKeys,
-			Compositions:              g.Compositions,
-			Version:                   g.Version,
-			Crd:                       g.crd,
-			Provider:                  g.Provider,
-			OverrideFields:            g.OverrideFields,
-			Labels:                    g.Labels,
-			GlobalLabels:              globalLabels,
-			GeneratorConfig:           *generatorConfig,
-			ReadinessChecks:           g.ReadinessChecks,
-			ResourceName:              g.ResourceName,
-			UIDFieldPath:              g.UIDFieldPath,
-			ExpandCompositionName:     generatorConfig.ExpandCompositionName,
-			TagType:                   g.TagType,
-			TagProperty:               g.TagProperty,
-			AutoReadyFunction:         generatorConfig.AutoReadyFunction,
-			OverrideFieldsInClaim:     g.OverrideFieldsInClaim,
-			PatchAndTransfromFunction: generatorConfig.PatchAndTransfromFunction,
+			Group:                        g.Group,
+			Name:                         g.Name,
+			Plural:                       g.Plural,
+			PatchExternalName:            g.PatchExternalName,
+			PatchlName:                   g.PatchlName,
+			ConnectionSecretKeys:         g.ConnectionSecretKeys,
+			Compositions:                 g.Compositions,
+			Version:                      g.Version,
+			Crd:                          g.crd,
+			Provider:                     g.Provider,
+			OverrideFields:               g.OverrideFields,
+			Labels:                       g.Labels,
+			GlobalLabels:                 globalLabels,
+			GeneratorConfig:              *generatorConfig,
+			ReadinessChecks:              g.ReadinessChecks,
+			ResourceName:                 g.ResourceName,
+			UIDFieldPath:                 g.UIDFieldPath,
+			ExpandCompositionName:        generatorConfig.ExpandCompositionName,
+			TagType:                      g.TagType,
+			TagProperty:                  g.TagProperty,
+			AutoReadyFunction:            generatorConfig.AutoReadyFunction,
+			OverrideFieldsInClaim:        g.OverrideFieldsInClaim,
+			PatchAndTransfromFunction:    generatorConfig.PatchAndTransfromFunction,
+			DefaultCompositeDeletePolicy: g.DefaultCompositeDeletePolicy,
 		}
 		if g.AdditionalPipelineSteps != nil {
 			g2.AdditionalPipelineSteps = g.AdditionalPipelineSteps
@@ -528,6 +556,35 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 			}
 		}
 	}
+}
+
+func (g *Generator) setDefaultCompositeDeletePolicy(xrd *crossplanev1.CompositeResourceDefinition) (bool, error) {
+	spec := xrd.Spec
+	foregroundPolicy := xpv1.CompositeDeleteForeground
+	backgroundPolicy := xpv1.CompositeDeleteBackground
+
+	if (*g.DefaultCompositeDeletePolicy != string(foregroundPolicy) && *g.DefaultCompositeDeletePolicy != string(backgroundPolicy)) {
+		return false, errors.New("Invalid value for defaultCompositeDeletePolicy, must be either Background or Foreground")
+	}
+
+	if (g.DefaultCompositeDeletePolicy != nil) {
+		if (spec.DefaultCompositeDeletePolicy == nil) {
+			emptyPolicy := xpv1.CompositeDeletePolicy("")
+			spec.DefaultCompositeDeletePolicy = &emptyPolicy
+		}
+		
+		if (*g.DefaultCompositeDeletePolicy == string(foregroundPolicy)) {
+			*spec.DefaultCompositeDeletePolicy = foregroundPolicy
+		}
+
+		if (*g.DefaultCompositeDeletePolicy == string(backgroundPolicy)) {
+			*spec.DefaultCompositeDeletePolicy = backgroundPolicy
+		}
+	}
+	
+	xrd.Spec = spec
+
+	return true, nil
 }
 
 func (g *Generator) updateKubernetesValidation(xrd *crossplanev1.CompositeResourceDefinition) (bool, error) {
@@ -655,7 +712,7 @@ func parseArgs(configFile, generatorFile, inputPath, scriptFile, scriptPath, out
 	if err != nil {
 		return err
 	}
-
+	
 	_, b, _, ok := runtime.Caller(0)
 	if !ok {
 		return errors.New("Unable to get generator module path")
