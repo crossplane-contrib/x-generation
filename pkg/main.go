@@ -712,7 +712,6 @@ func parseArgs(configFile, generatorFile, inputPath, scriptFile, scriptPath, out
 	if err != nil {
 		return err
 	}
-	
 	_, b, _, ok := runtime.Caller(0)
 	if !ok {
 		return errors.New("Unable to get generator module path")

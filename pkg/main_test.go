@@ -710,7 +710,6 @@ func Test_getCommonLabelsString(t *testing.T) {
 		{
 			name: "Should generate object",
 			args: args{
-
 				g: &Generator{
 					Labels: xtype.LocalLabelConfig{
 						LabelConfig: xtype.LabelConfig{
@@ -2704,56 +2703,57 @@ func Test_noDefaultPatch(t *testing.T) {
 	})
 }
 
-func Test_setDefaultCompositeDeletePolicy_Foreground(t *testing.T) {
+func Test_setDefaultCompositeDeletePolicy(t *testing.T) {
 	type args struct {
 		crd     extv1.CustomResourceDefinition
-		version string
 	}
-	testData := struct {
+	tests := []struct {
 		name string
 		args args
+		want string
 	}{
-
-		name: "Should set default composite delete policy to Foreground",
-		args: args{
-			crd: extv1.CustomResourceDefinition{
-				Spec: extv1.CustomResourceDefinitionSpec{
-					Versions: []extv1.CustomResourceDefinitionVersion{
-						{
-							Name: "testv1",
-							AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
-								JSONPath: ".metadata.annotations.crossplane.io/external-name",
-								Name:     "EXTERNAL-NAME",
-								Type:     "string",
-							}},
-							Schema: &extv1.CustomResourceValidation{
-								OpenAPIV3Schema: &extv1.JSONSchemaProps{
-									Properties: map[string]extv1.JSONSchemaProps{
-										"spec": {
-											Properties: map[string]extv1.JSONSchemaProps{
-												"providerConfigRef": {
-													Default: &extv1.JSON{
-														Raw: []byte("{\"name\": \"default\"}"),
-													},
-													Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
-													Type:        "object",
-													Properties: map[string]extv1.JSONSchemaProps{
-														"name": {
-															Type:        "string",
-															Description: "Name of the referenced object.",
+		{
+			name: "Should set default composite delete policy Foreground",
+			args: args{
+				crd: extv1.CustomResourceDefinition{
+					Spec: extv1.CustomResourceDefinitionSpec{
+						Versions: []extv1.CustomResourceDefinitionVersion{
+							{
+								Name: "testv1",
+								AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
+									JSONPath: ".metadata.annotations.crossplane.io/external-name",
+									Name:     "EXTERNAL-NAME",
+									Type:     "string",
+								}},
+								Schema: &extv1.CustomResourceValidation{
+									OpenAPIV3Schema: &extv1.JSONSchemaProps{
+										Properties: map[string]extv1.JSONSchemaProps{
+											"spec": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"providerConfigRef": {
+														Default: &extv1.JSON{
+															Raw: []byte("{\"name\": \"default\"}"),
 														},
-														"policy": {
-															Type:        "string",
-															Description: "description: Policies for referencing.",
+														Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
+														Type:        "object",
+														Properties: map[string]extv1.JSONSchemaProps{
+															"name": {
+																Type:        "string",
+																Description: "Name of the referenced object.",
+															},
+															"policy": {
+																Type:        "string",
+																Description: "description: Policies for referencing.",
+															},
 														},
 													},
 												},
 											},
-										},
-										"status": {
-											Properties: map[string]extv1.JSONSchemaProps{
-												"name": {
-													Type: "string",
+											"status": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"name": {
+														Type: "string",
+													},
 												},
 											},
 										},
@@ -2764,142 +2764,50 @@ func Test_setDefaultCompositeDeletePolicy_Foreground(t *testing.T) {
 					},
 				},
 			},
-			version: "v1alpha1",
+			want: "Foreground",
 		},
-	}
-	t.Run(testData.name, func(t *testing.T) {
-
-		crdSource, err := json.Marshal(testData.args.crd)
-		if err != nil {
-			t.Errorf("could not marshal crdSource")
-		}
-		tempDir, err := os.MkdirTemp("", "g-generation*")
-		if err != nil {
-			t.Errorf("could not generate tempDir")
-		}
-		plural := "TestObjects"
-		g := Generator{
-			Group:       "example.cloud",
-			Name:        "TestObject",
-			Version:     "testv1",
-			crdSource:   string(crdSource),
-			configPath:  tempDir,
-			TagType:     nil,
-			TagProperty: nil,
-			Provider: xtype.ProviderConfig{
-				CRD: xtype.CrdConfig{
-					Version: "testv1",
-				},
-			},
-			Plural: &plural,
-			Compositions: []xtype.Composition{
-				{
-					Name:     "configuration",
-					Provider: "sop",
-					Default:  true,
-				},
-			},
-			OverrideFields:        []xtype.OverrideField{},
-			OverrideFieldsInClaim: []xtype.OverrideFieldInClaim{},
-			DefaultCompositeDeletePolicy: func() *string { s := "Foreground"; return &s }(),
-		}
-
-		gConfig := xtype.GeneratorConfig{
-			CompositionIdentifier: "example.cloud",
-		}
-
-		cwd, _ := os.Getwd()
-
-		sp := filepath.Join(cwd, "functions")
-		g.Exec(&gConfig, sp, "", "")
-
-		path := filepath.Join(tempDir, "definition.yaml")
-		y, err := os.ReadFile(path)
-
-		if err != nil {
-			t.Errorf("could not load definition.yaml file")
-		}
-
-		var newCRD cv1.CompositeResourceDefinition
-			err = yaml.Unmarshal(y, &newCRD)
-
-		if err != nil {
-			t.Errorf("could not parse definition.yaml file")
-		}
-
-		// assert that the default composite delete policy is set to Foreground
-		if newCRD.Spec.DefaultCompositeDeletePolicy != nil {
-			if *newCRD.Spec.DefaultCompositeDeletePolicy != "Foreground" {
-				t.Errorf("expected default composite delete policy to be Foreground, got %s", *newCRD.Spec.DefaultCompositeDeletePolicy)
-			}
-		}
-
-		err = os.Remove(path)
-		if err != nil {
-			t.Error("could not delete definition file")
-		}
-		definitionPath := filepath.Join(tempDir, "composition-configuration.yaml")
-		err = os.Remove(definitionPath)
-		if err != nil {
-			t.Error("could not delete composition file")
-		}
-		err = os.Remove(tempDir)
-		if err != nil {
-			t.Error("could not delete temp directory")
-		}
-	})
-}
-
-func Test_setDefaultCompositeDeletePolicy_Background(t *testing.T) {
-	type args struct {
-		crd     extv1.CustomResourceDefinition
-		version string
-	}
-	testData := struct {
-		name string
-		args args
-	}{
-
-		name: "Should set default composite delete policy to Background",
-		args: args{
-			crd: extv1.CustomResourceDefinition{
-				Spec: extv1.CustomResourceDefinitionSpec{
-					Versions: []extv1.CustomResourceDefinitionVersion{
-						{
-							Name: "testv1",
-							AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
-								JSONPath: ".metadata.annotations.crossplane.io/external-name",
-								Name:     "EXTERNAL-NAME",
-								Type:     "string",
-							}},
-							Schema: &extv1.CustomResourceValidation{
-								OpenAPIV3Schema: &extv1.JSONSchemaProps{
-									Properties: map[string]extv1.JSONSchemaProps{
-										"spec": {
-											Properties: map[string]extv1.JSONSchemaProps{
-												"providerConfigRef": {
-													Default: &extv1.JSON{
-														Raw: []byte("{\"name\": \"default\"}"),
-													},
-													Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
-													Type:        "object",
-													Properties: map[string]extv1.JSONSchemaProps{
-														"name": {
-															Type:        "string",
-															Description: "Name of the referenced object.",
+		{
+			name: "Should set default composite delete policy Background",
+			args: args{
+				crd: extv1.CustomResourceDefinition{
+					Spec: extv1.CustomResourceDefinitionSpec{
+						Versions: []extv1.CustomResourceDefinitionVersion{
+							{
+								Name: "testv1",
+								AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
+									JSONPath: ".metadata.annotations.crossplane.io/external-name",
+									Name:     "EXTERNAL-NAME",
+									Type:     "string",
+								}},
+								Schema: &extv1.CustomResourceValidation{
+									OpenAPIV3Schema: &extv1.JSONSchemaProps{
+										Properties: map[string]extv1.JSONSchemaProps{
+											"spec": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"providerConfigRef": {
+														Default: &extv1.JSON{
+															Raw: []byte("{\"name\": \"default\"}"),
 														},
-														"policy": {
-															Type:        "string",
-															Description: "description: Policies for referencing.",
+														Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
+														Type:        "object",
+														Properties: map[string]extv1.JSONSchemaProps{
+															"name": {
+																Type:        "string",
+																Description: "Name of the referenced object.",
+															},
+															"policy": {
+																Type:        "string",
+																Description: "description: Policies for referencing.",
+															},
 														},
 													},
 												},
 											},
-										},
-										"status": {
-											Properties: map[string]extv1.JSONSchemaProps{
-												"name": {
-													Type: "string",
+											"status": {
+												Properties: map[string]extv1.JSONSchemaProps{
+													"name": {
+														Type: "string",
+													},
 												},
 											},
 										},
@@ -2910,88 +2818,91 @@ func Test_setDefaultCompositeDeletePolicy_Background(t *testing.T) {
 					},
 				},
 			},
-			version: "v1alpha1",
+			want: "Background",
 		},
 	}
-	t.Run(testData.name, func(t *testing.T) {
-
-		crdSource, err := json.Marshal(testData.args.crd)
-		if err != nil {
-			t.Errorf("could not marshal crdSource")
-		}
-		tempDir, err := os.MkdirTemp("", "g-generation*")
-		if err != nil {
-			t.Errorf("could not generate tempDir")
-		}
-		plural := "TestObjects"
-		g := Generator{
-			Group:       "example.cloud",
-			Name:        "TestObject",
-			Version:     "testv1",
-			crdSource:   string(crdSource),
-			configPath:  tempDir,
-			TagType:     nil,
-			TagProperty: nil,
-			Provider: xtype.ProviderConfig{
-				CRD: xtype.CrdConfig{
-					Version: "testv1",
-				},
-			},
-			Plural: &plural,
-			Compositions: []xtype.Composition{
-				{
-					Name:     "configuration",
-					Provider: "sop",
-					Default:  true,
-				},
-			},
-			OverrideFields:        []xtype.OverrideField{},
-			OverrideFieldsInClaim: []xtype.OverrideFieldInClaim{},
-			DefaultCompositeDeletePolicy: func() *string { s := "Background"; return &s }(),
-		}
-
-		gConfig := xtype.GeneratorConfig{
-			CompositionIdentifier: "example.cloud",
-		}
-
-		cwd, _ := os.Getwd()
-
-		sp := filepath.Join(cwd, "functions")
-		g.Exec(&gConfig, sp, "", "")
-
-		path := filepath.Join(tempDir, "definition.yaml")
-		y, err := os.ReadFile(path)
-
-		if err != nil {
-			t.Errorf("could not load definition.yaml file")
-		}
-
-		var newCRD cv1.CompositeResourceDefinition
-			err = yaml.Unmarshal(y, &newCRD)
-
-		if err != nil {
-			t.Errorf("could not parse definition.yaml file")
-		}
-
-		// assert that the default composite delete policy is set to Background
-		if newCRD.Spec.DefaultCompositeDeletePolicy != nil {
-			if *newCRD.Spec.DefaultCompositeDeletePolicy != "Background" {
-				t.Errorf("expected default composite delete policy to be Background, got %s", *newCRD.Spec.DefaultCompositeDeletePolicy)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			crdSource, err := json.Marshal(tt.args.crd)
+			if err != nil {
+				t.Errorf("could not marshal crdSource")
 			}
-		}
+			tempDir, err := os.MkdirTemp("", "g-generation*")
+			if err != nil {
+				t.Errorf("could not generate tempDir")
+			}
+			plural := "TestObjects"
+			g := Generator{
+				Group:       "example.cloud",
+				Name:        "TestObject",
+				Version:     "testv1",
+				crdSource:   string(crdSource),
+				configPath:  tempDir,
+				TagType:     nil,
+				TagProperty: nil,
+				Provider: xtype.ProviderConfig{
+					CRD: xtype.CrdConfig{
+						Version: "testv1",
+					},
+				},
+				Plural: &plural,
+				Compositions: []xtype.Composition{
+					{
+						Name:     "configuration",
+						Provider: "sop",
+						Default:  true,
+					},
+				},
+				OverrideFields:        []xtype.OverrideField{},
+				OverrideFieldsInClaim: []xtype.OverrideFieldInClaim{},
+				DefaultCompositeDeletePolicy: func() *string { s := tt.want; return &s }(),
+			}
 
-		err = os.Remove(path)
-		if err != nil {
-			t.Error("could not delete definition file")
-		}
-		definitionPath := filepath.Join(tempDir, "composition-configuration.yaml")
-		err = os.Remove(definitionPath)
-		if err != nil {
-			t.Error("could not delete composition file")
-		}
-		err = os.Remove(tempDir)
-		if err != nil {
-			t.Error("could not delete temp directory")
-		}
-	})
+			gConfig := xtype.GeneratorConfig{
+				CompositionIdentifier: "example.cloud",
+			}
+
+			cwd, _ := os.Getwd()
+
+			sp := filepath.Join(cwd, "functions")
+			g.Exec(&gConfig, sp, "", "")
+
+			path := filepath.Join(tempDir, "definition.yaml")
+			y, err := os.ReadFile(path)
+
+			if err != nil {
+				t.Errorf("could not load definition.yaml file")
+			}
+
+			var newCRD cv1.CompositeResourceDefinition
+				err = yaml.Unmarshal(y, &newCRD)
+
+			if err != nil {
+				t.Errorf("could not parse definition.yaml file")
+			}
+
+			// assert that the default composite delete policy is set
+			if newCRD.Spec.DefaultCompositeDeletePolicy != nil {
+				if string(*newCRD.Spec.DefaultCompositeDeletePolicy) != tt.want {
+					t.Errorf("expected default composite delete policy to be %s, got %s", tt.want, *newCRD.Spec.DefaultCompositeDeletePolicy)
+				}
+			} else {
+				t.Errorf("expected default composite delete policy to be %s, got nil", tt.want)
+			}
+
+			err = os.Remove(path)
+			if err != nil {
+				t.Error("could not delete definition file")
+			}
+			definitionPath := filepath.Join(tempDir, "composition-configuration.yaml")
+			err = os.Remove(definitionPath)
+			if err != nil {
+				t.Error("could not delete composition file")
+			}
+			err = os.Remove(tempDir)
+			if err != nil {
+				t.Error("could not delete temp directory")
+			}
+		})
+	}
 }

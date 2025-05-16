@@ -89,7 +89,7 @@ The local configuration is placed in the subfolder of the composition to be crea
 | overrideFieldsInClaim          | object                | This optional property can be used to override the names in the composite and the claim or add properties. See description below |
 | patchName                      | boolean               | If set to false, the name of the object will not be patched, otherwise`patchExternalName` decides if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]` |
 | patchExternalName              | boolean               | Decides if if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]`. Not applied if `patchName` is false |
-| defaultCompositeDeletePolicy   | string                | This optional property can be used to set the defaultCompositeDeletePolicy on the xrd, possible values Foreground or Background, The default value is defaultCompositeDeletePolicy: Background |
+| defaultCompositeDeletePolicy   | string                | This optional property can be used to set the defaultCompositeDeletePolicy on the xrd, possible values Foreground or Background |
 
 
 ## overrideFieldsInClaim
