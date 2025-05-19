@@ -87,8 +87,9 @@ The local configuration is placed in the subfolder of the composition to be crea
 | tags.globalHandling.fromLabels | "append" or "replace" | If append, the tags in tags.fromLabels are appended to the tags in the global configuration tags.fromLabels, otherwise those will be replaced |
 | tags.globalHandling.common     | "append" or "replace" | If append, the tags in labels.common are appended to the tasg in the global configuration tags.common, otherwise those will be replaced |
 | overrideFieldsInClaim          | object                | This optional property can be used to override the names in the composite and the claim or add properties. See description below |
-| patchName          | boolean                | If set to false, the name of the object will not be patched, otherwise`patchExternalName` decides if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]` |
-| patchExternalName          | boolean                | Decides if if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]`. Not applied if `patchName` is false |
+| patchName                      | boolean               | If set to false, the name of the object will not be patched, otherwise`patchExternalName` decides if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]` |
+| patchExternalName              | boolean               | Decides if if the name of the claim will be patched to `metadata.name` or `metadata.annotations[crossplane.io/external-name]`. Not applied if `patchName` is false |
+| defaultCompositeDeletePolicy   | string                | This optional property can be used to set the defaultCompositeDeletePolicy on the xrd, possible values Foreground or Background |
 
 
 ## overrideFieldsInClaim

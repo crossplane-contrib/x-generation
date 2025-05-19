@@ -20,28 +20,29 @@ import (
 )
 
 type XGenerator struct {
-	Group                     string                      `yaml:"group" json:"group"`
-	Name                      string                      `yaml:"name" json:"name"`
-	Plural                    *string                     `yaml:"plural,omitempty" json:"plural,omitempty"`
-	PatchExternalName         *bool                       `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
-	PatchlName                *bool                       `yaml:"patchName,omitempty" json:"patchName,omitempty"`
-	ConnectionSecretKeys      *[]string                   `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
-	Compositions              []t.Composition             `yaml:"compositions" json:"compositions"`
-	Version                   string                      `yaml:"version" json:"version"`
-	Crd                       v1.CustomResourceDefinition `yaml:"crd" json:"crd"`
-	Provider                  t.ProviderConfig            `yaml:"provider" json:"provider"`
-	OverrideFields            []t.OverrideField           `yaml:"overrideFields" json:"overrideFields"`
-	OverrideFieldsInClaim     []t.OverrideFieldInClaim    `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
-	Labels                    t.LocalLabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
-	ReadinessChecks           *bool                       `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
-	ResourceName              *string                     `yaml:"resourceName,omitempty" json:"resourceName,omitempty"`
-	UIDFieldPath              *string                     `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
-	ExpandCompositionName     *bool                       `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
-	AdditionalPipelineSteps   []t.PipelineStep            `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
-	TagType                   *string                     `yaml:"tagType,omitempty" json:"tagType,omitempty"`
-	TagProperty               *string                     `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
-	AutoReadyFunction         *t.AutoReadyFunction        `yaml:"autoReadyFunction,omitempty" json:"autoReadyFunction,omitempty"`
-	PatchAndTransfromFunction *string                     `yaml:"patchAndTransfromFunction,omitempty" json:"patchAndTransfromFunction,omitempty"`
+	Group                        string                      `yaml:"group" json:"group"`
+	Name                         string                      `yaml:"name" json:"name"`
+	Plural                       *string                     `yaml:"plural,omitempty" json:"plural,omitempty"`
+	PatchExternalName            *bool                       `yaml:"patchExternalName,omitempty" json:"patchExternalName,omitempty"`
+	PatchlName                   *bool                       `yaml:"patchName,omitempty" json:"patchName,omitempty"`
+	ConnectionSecretKeys         *[]string                   `yaml:"connectionSecretKeys,omitempty" json:"connectionSecretKeys,omitempty"`
+	Compositions                 []t.Composition             `yaml:"compositions" json:"compositions"`
+	Version                      string                      `yaml:"version" json:"version"`
+	Crd                          v1.CustomResourceDefinition `yaml:"crd" json:"crd"`
+	Provider                     t.ProviderConfig            `yaml:"provider" json:"provider"`
+	OverrideFields               []t.OverrideField           `yaml:"overrideFields" json:"overrideFields"`
+	OverrideFieldsInClaim        []t.OverrideFieldInClaim    `yaml:"overrideFieldsInClaim" json:"overrideFieldsInClaim"`
+	Labels                       t.LocalLabelConfig          `yaml:"labels,omitempty" json:"labels,omitempty"`
+	ReadinessChecks              *bool                       `yaml:"readinessChecks,omitempty" json:"readinessChecks,omitempty"`
+	ResourceName                 *string                     `yaml:"resourceName,omitempty" json:"resourceName,omitempty"`
+	UIDFieldPath                 *string                     `yaml:"uidFieldPath,omitempty" json:"uidFieldPath,omitempty"`
+	ExpandCompositionName        *bool                       `yaml:"expandCompositionName,omitempty" json:"expandCompositionName,omitempty"`
+	AdditionalPipelineSteps      []t.PipelineStep            `yaml:"additionalPipelineSteps,omitempty" json:"additionalPipelineSteps,omitempty"`
+	TagType                      *string                     `yaml:"tagType,omitempty" json:"tagType,omitempty"`
+	TagProperty                  *string                     `yaml:"tagProperty,omitempty" json:"tagProperty,omitempty"`
+	AutoReadyFunction            *t.AutoReadyFunction        `yaml:"autoReadyFunction,omitempty" json:"autoReadyFunction,omitempty"`
+	PatchAndTransfromFunction    *string                     `yaml:"patchAndTransfromFunction,omitempty" json:"patchAndTransfromFunction,omitempty"`
+	DefaultCompositeDeletePolicy *string                     `yaml:"defaultCompositeDeletePolicy,omitempty" json:"defaultCompositeDeletePolicy,omitempty"`
 
 	GlobalLabels             []string
 	GeneratorConfig          t.GeneratorConfig
