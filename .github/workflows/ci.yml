@@ -19,7 +19,7 @@ env:
   CROSSPLANE_REGORG: 'ghcr.io/crossplane-contrib' # xpkg.crossplane.io/crossplane-contrib
   UPBOUND_REGORG: 'xpkg.upbound.io/crossplane-contrib'
 
-  PROVIDER_REPO: provider-keycloak
+  PROVIDER_REPO: x-generation
 
   # Upbound registry specific variables
   UP_DOMAIN: "https://upbound.io"
