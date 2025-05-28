@@ -2707,118 +2707,97 @@ func Test_setDefaultCompositeDeletePolicy(t *testing.T) {
 	type args struct {
 		crd     extv1.CustomResourceDefinition
 	}
+	crdBase := extv1.CustomResourceDefinition{
+		Spec: extv1.CustomResourceDefinitionSpec{
+			Versions: []extv1.CustomResourceDefinitionVersion{
+				{
+					Name: "testv1",
+					AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
+						JSONPath: ".metadata.annotations.crossplane.io/external-name",
+						Name:     "EXTERNAL-NAME",
+						Type:     "string",
+					}},
+					Schema: &extv1.CustomResourceValidation{
+						OpenAPIV3Schema: &extv1.JSONSchemaProps{
+							Properties: map[string]extv1.JSONSchemaProps{
+								"spec": {
+									Type: "object",
+									Description: "Spec of the resource",
+									Properties: map[string]extv1.JSONSchemaProps{
+										"providerConfigRef": {
+											Default: &extv1.JSON{
+												Raw: []byte("{\"name\": \"default\"}"),
+											},
+											Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
+											Type:        "object",
+											Properties: map[string]extv1.JSONSchemaProps{
+												"name": {
+													Type:        "string",
+													Description: "Name of the referenced object.",
+												},
+												"policy": {
+													Type:        "string",
+													Description: "description: Policies for referencing.",
+												},
+											},
+										},
+									},
+								},
+								"status": {
+									Type: "object",
+									Description: "Status of the resource",
+									Properties: map[string]extv1.JSONSchemaProps{
+										"observed": {
+											Type: "object",
+											Description: "Observed prop",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	tests := []struct {
 		name string
 		args args
 		want string
+		usePipeline bool
 	}{
 		{
-			name: "Should set default composite delete policy Foreground",
+			name: "Should set default composite delete policy Foreground no pipeline",
 			args: args{
-				crd: extv1.CustomResourceDefinition{
-					Spec: extv1.CustomResourceDefinitionSpec{
-						Versions: []extv1.CustomResourceDefinitionVersion{
-							{
-								Name: "testv1",
-								AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
-									JSONPath: ".metadata.annotations.crossplane.io/external-name",
-									Name:     "EXTERNAL-NAME",
-									Type:     "string",
-								}},
-								Schema: &extv1.CustomResourceValidation{
-									OpenAPIV3Schema: &extv1.JSONSchemaProps{
-										Properties: map[string]extv1.JSONSchemaProps{
-											"spec": {
-												Properties: map[string]extv1.JSONSchemaProps{
-													"providerConfigRef": {
-														Default: &extv1.JSON{
-															Raw: []byte("{\"name\": \"default\"}"),
-														},
-														Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
-														Type:        "object",
-														Properties: map[string]extv1.JSONSchemaProps{
-															"name": {
-																Type:        "string",
-																Description: "Name of the referenced object.",
-															},
-															"policy": {
-																Type:        "string",
-																Description: "description: Policies for referencing.",
-															},
-														},
-													},
-												},
-											},
-											"status": {
-												Properties: map[string]extv1.JSONSchemaProps{
-													"name": {
-														Type: "string",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				crd: crdBase,
 			},
 			want: "Foreground",
+			usePipeline: false,
 		},
 		{
-			name: "Should set default composite delete policy Background",
+			name: "Should set default composite delete policy Background no pipeline",
 			args: args{
-				crd: extv1.CustomResourceDefinition{
-					Spec: extv1.CustomResourceDefinitionSpec{
-						Versions: []extv1.CustomResourceDefinitionVersion{
-							{
-								Name: "testv1",
-								AdditionalPrinterColumns: []extv1.CustomResourceColumnDefinition{{
-									JSONPath: ".metadata.annotations.crossplane.io/external-name",
-									Name:     "EXTERNAL-NAME",
-									Type:     "string",
-								}},
-								Schema: &extv1.CustomResourceValidation{
-									OpenAPIV3Schema: &extv1.JSONSchemaProps{
-										Properties: map[string]extv1.JSONSchemaProps{
-											"spec": {
-												Properties: map[string]extv1.JSONSchemaProps{
-													"providerConfigRef": {
-														Default: &extv1.JSON{
-															Raw: []byte("{\"name\": \"default\"}"),
-														},
-														Description: "ProviderConfigReference specifies how the provider that will be used to create, observe, update, and delete this managed",
-														Type:        "object",
-														Properties: map[string]extv1.JSONSchemaProps{
-															"name": {
-																Type:        "string",
-																Description: "Name of the referenced object.",
-															},
-															"policy": {
-																Type:        "string",
-																Description: "description: Policies for referencing.",
-															},
-														},
-													},
-												},
-											},
-											"status": {
-												Properties: map[string]extv1.JSONSchemaProps{
-													"name": {
-														Type: "string",
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
+				crd: crdBase,
 			},
 			want: "Background",
+			usePipeline: false,
+		},
+		{
+			name: "Should set default composite delete policy Foreground with pipeline",
+			args: args{
+				crd: crdBase,
+			},
+			want: "Foreground",
+			usePipeline: true,
+		},
+		{
+			name: "Should set default composite delete policy Background with pipeline",
+			args: args{
+				crd: crdBase,
+			},
+			want: "Background",
+			usePipeline: true,
 		},
 	}
 	for _, tt := range tests {
@@ -2849,10 +2828,11 @@ func Test_setDefaultCompositeDeletePolicy(t *testing.T) {
 				Compositions: []xtype.Composition{
 					{
 						Name:     "configuration",
-						Provider: "sop",
+						Provider: "test",
 						Default:  true,
 					},
 				},
+				crd: tt.args.crd,
 				OverrideFields:        []xtype.OverrideField{},
 				OverrideFieldsInClaim: []xtype.OverrideFieldInClaim{},
 				DefaultCompositeDeletePolicy: func() *string { s := tt.want; return &s }(),
@@ -2860,6 +2840,11 @@ func Test_setDefaultCompositeDeletePolicy(t *testing.T) {
 
 			gConfig := xtype.GeneratorConfig{
 				CompositionIdentifier: "example.cloud",
+				Provider: xtype.GlobalProviderConfig{
+					Name: "test",
+					Version: "testv1",
+				},
+				UsePipeline: func() *bool { b := tt.usePipeline; return &b }(),
 			}
 
 			cwd, _ := os.Getwd()
