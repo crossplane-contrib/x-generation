@@ -490,6 +490,15 @@ func (g *Generator) Exec(generatorConfig *t.GeneratorConfig, scriptPath, scriptF
 		if err != nil {
 			log.Fatalf("Error creating xrd: %v", err)
 		}
+
+		// add defaultCompositeDeletePolicy property if its set
+		if g.DefaultCompositeDeletePolicy != nil {
+			_, err := g.setDefaultCompositeDeletePolicy(xrd)
+			if err != nil {
+				fmt.Printf("Error updating defaultCompositeDeletePolicy: %v", err)
+			}
+		}
+
 		rawContent, err := json.Marshal(xrd.Spec.Versions[0].Schema.OpenAPIV3Schema.Object)
 		if err != nil {
 			fmt.Printf("Error marhalling object: %v", err)
